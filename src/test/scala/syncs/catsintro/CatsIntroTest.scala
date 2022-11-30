@@ -143,11 +143,11 @@ class CatsIntroTest extends AnyWordSpec with Matchers {
 
       "traverse a list with a function returning option, producing Some List if everything succeeds" in {
 
-        // parse everything and get a Some of a List of parsed strings
+        // parse everything and get a Right of a List of parsed strings
         List("1", "5").traverse[EitherString, Int](parseStringToInt) shouldBe Right(List(1, 5))
       }
 
-      "traverse a list with the same function, producing None if anything fails" in {
+      "traverse a list with the same function, producing Left if anything fails" in {
         List("1", "Five").traverse(parseStringToInt) shouldBe Left("failed to parse")
       }
 
