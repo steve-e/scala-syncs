@@ -9,8 +9,6 @@ class CatsIntroTest extends AnyWordSpec with Matchers {
 
   "Functor" when {
 
-
-
     "not imported in this scope" should {
       "not be usable" in {
         """Functor[Option]""" shouldNot compile
@@ -18,7 +16,7 @@ class CatsIntroTest extends AnyWordSpec with Matchers {
     }
 
     /* Summon a functor instance for Option with with Functor[Option]
-    This uses the apply method on Functor, which simple returns its implicit argument. See
+    This uses the apply method on Functor, which simply returns its implicit argument. See
     https://github.com/typelevel/cats/blob/a982d333f5bec376d43ecc7f4427a08e40cf9f88/core/src/main/scala/cats/Functor.scala#L229
      */
     "summoned for Option" should {
