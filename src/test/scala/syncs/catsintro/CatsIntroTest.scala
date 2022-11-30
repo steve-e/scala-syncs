@@ -1,8 +1,9 @@
 package syncs.catsintro
 
-import cats.Functor
+import cats.{Functor, Monad}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+
 import scala.languageFeature.higherKinds
 // Using word spec for nesting
 class CatsIntroTest extends AnyWordSpec with Matchers {
@@ -27,7 +28,17 @@ class CatsIntroTest extends AnyWordSpec with Matchers {
 
       "map a function" in {
         Functor[Option].map(someString)(_.toUpperCase) shouldBe Some("HELLO SOME CATS")
+
+        // a functor for option is implicitly available
+        val optionFunctor: Functor[Option] = implicitly[Functor[Option]]
+
+        // I can use the name of the "apply" method, but scala lets me leave that out
+        // I can pass in a Function[Option] parameter but don't need to if its available implicitly
+        Functor.apply[Option](optionFunctor).map(someString)(_.toUpperCase) shouldBe Some("HELLO SOME CATS")
+
         Functor[Option].map(noneString)(_.toUpperCase) shouldBe None
+
+
       }
     }
 
@@ -99,18 +110,28 @@ class CatsIntroTest extends AnyWordSpec with Matchers {
       }
 
       "be usable on my own Functor for my own class" in {
+
         case class Thing[T](definitely: T, maybe: Option[T])
+
         val thing1 = Thing("of course", None)
         val thing2 = Thing("always", Some("sometimes"))
         val thing3 = Thing(1, Some(2))
 
         implicit val thingFunctor: Functor[Thing] = new Functor[Thing] {
-          override def map[A, B](fa: Thing[A])(f: A => B): Thing[B] = Thing(f(fa.definitely), fa.maybe.map(f))
+
+          override def map[A, B](thingA: Thing[A])(functionAtoB: A => B): Thing[B] = Thing(
+            definitely = functionAtoB(thingA.definitely),
+            maybe = thingA.maybe.map(functionAtoB)
+          )
         }
 
         thing1.map(_.toUpperCase) shouldBe Thing("OF COURSE", None)
         thing2.map(_.length) shouldBe Thing(6, Some(9))
         thing3.map(x => x * 3) shouldBe Thing(3, Some(6))
+
+        thing1.void shouldBe Thing((),None)
+
+        thing2.as(3) shouldBe Thing(3, Some(3))
 
       }
 

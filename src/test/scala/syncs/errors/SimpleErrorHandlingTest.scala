@@ -59,6 +59,27 @@ class SimpleErrorHandlingTest extends AnyFlatSpec with Matchers {
 
   }
 
+  "parameters" should "be interesting" in {
+
+    // normal by value methods have the parameter evaluated before the method is called
+    def byValue(x:Int): Int = x * 2
+
+    // by name only evaluates parameter when it is referenced, here in the try block
+    def byName(x : => Int): Int = try x * 2 catch {case _: Exception => -1}
+
+    val a: Int = 2
+    lazy val b: Int = throw new Exception()
+
+    byValue(a) shouldBe 4
+    /*
+    This would throw an exception
+    byValue(b) shouldBe 4
+    */
+
+    byName(b) shouldBe -1
+
+  }
+
   "getStringOrNull" should "return a string" in {
     BadApi.getStringOrNull(1) shouldBe "one"
   }
@@ -93,7 +114,6 @@ class SimpleErrorHandlingTest extends AnyFlatSpec with Matchers {
 
     def getBoolean(x: Int): Option[Boolean] = Try(BadApi.getBooleanOrThrow(x)).toOption
   }
-
 
   "getString" should "return some string for valid input " in {
     val maybeString = OptionWrapper.getString(1)
