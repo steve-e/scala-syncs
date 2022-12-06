@@ -29,3 +29,12 @@ lazy val root = (project in file("."))
    artifactorySettings
   )
 
+lazy val docs = project
+  .in(file("mdocs-source")) // important: it must not be docs/
+  .settings(
+    mdocOut := file("docs"),
+    mdocIn := file("mdocs-source")
+  )
+  .dependsOn(root)
+  .enablePlugins(MdocPlugin)
+

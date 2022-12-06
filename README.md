@@ -1,6 +1,13 @@
 # Scala Syncs
 This repo holds some code examples from the scala sync meetings, and related information.
 
+## Generated Docs
+Build the docs by running
+```bash
+sbt docs/mdoc
+```
+- [Implicits](docs/implicits.md) 
+
 ## Absolute basics on of Category theory
 - [What is a category](docs/category.md)
 - [Functor](docs/functor.md)
