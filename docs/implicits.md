@@ -1,6 +1,6 @@
 # Scala implicits
 
-## Implicit parameters
+## Implicit or contextual parameters
 
 ### Without implicits
 First a function without implicit arguments
@@ -29,7 +29,7 @@ This is repetitive, and worse, it also means if we want to change the greeting w
 
 ### Reimplemented with implicits
 ```scala
-def functionWithImplicits(name:String)(implicit greeter:Greeter):String = s"${greeter.greeting} $name"
+def functionWithImplicit(name:String)(implicit greeter:Greeter):String = s"${greeter.greeting} $name"
 ```
 
 We can use this as follows
@@ -38,11 +38,11 @@ We can use this as follows
 implicit val informal = Greeter("Hi")
 // informal: Greeter = Greeter("Hi")
 
-functionWithImplicits("Leo")
+functionWithImplicit("Leo")
 // res3: String = "Hi Leo"
-functionWithImplicits("Carlos")
+functionWithImplicit("Carlos")
 // res4: String = "Hi Carlos"
-functionWithImplicits("Eduard")
+functionWithImplicit("Eduard")
 // res5: String = "Hi Eduard"
 ```
 

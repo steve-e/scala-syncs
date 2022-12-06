@@ -25,7 +25,7 @@ This is repetitive, and worse, it also means if we want to change the greeting w
 
 ### Reimplemented with implicits
 ```scala mdoc
-def functionWithImplicits(name:String)(implicit greeter:Greeter):String = s"${greeter.greeting} $name"
+def functionWithImplicit(name:String)(implicit greeter:Greeter):String = s"${greeter.greeting} $name"
 ```
 
 We can use this as follows
@@ -33,9 +33,9 @@ We can use this as follows
 ```scala mdoc
 implicit val informal = Greeter("Hi")
 
-functionWithImplicits("Leo")
-functionWithImplicits("Carlos")
-functionWithImplicits("Eduard")
+functionWithImplicit("Leo")
+functionWithImplicit("Carlos")
+functionWithImplicit("Eduard")
 ```
 
 ## Implicit conversions
