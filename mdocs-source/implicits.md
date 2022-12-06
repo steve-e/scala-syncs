@@ -77,6 +77,7 @@ val ollie = Person("Oliver","Hardy")
 sameIdentitiy(stan, stan)
 
 ```
+It does not compile!
 
 Implicit conversion to the rescue
 
