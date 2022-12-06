@@ -1,6 +1,6 @@
 # Scala implicits
 
-## Implicit parameters
+## Implicit or contextual parameters
 
 ### Without implicits
 First a function without implicit arguments
