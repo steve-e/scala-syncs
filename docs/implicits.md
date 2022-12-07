@@ -61,14 +61,14 @@ If more than one implicit of the required type is found in the same scope of an 
 
 ```scala
 implicit val yo = Greeter("Yo")
-implicit val greertings = Greeter("Greetings")
+implicit val greetings = Greeter("Greetings")
 
 functionWithImplicit("Leo")
 // error: ambiguous implicit values:
 //  both value yo in object MdocApp of type => repl.MdocSession.MdocApp.Greeter
-//  and value greertings in object MdocApp of type => repl.MdocSession.MdocApp.Greeter
+//  and value greetings in object MdocApp of type => repl.MdocSession.MdocApp.Greeter
 //  match expected type repl.MdocSession.MdocApp.Greeter
-// functionWithImplicit("Leo")(greertings)
+// functionWithImplicit("Leo")(greetings)
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ```
 If there are too many implicits of the same type to use implicitly, 
@@ -76,9 +76,9 @@ then the function can be called passing the parameter explicitly.
 ```scala
 implicit val yo = Greeter("Yo")
 // yo: Greeter = Greeter("Yo")
-implicit val greertings = Greeter("Greetings")
-// greertings: Greeter = Greeter("Greetings")
-functionWithImplicit("Leo")(greertings)
+implicit val greetings = Greeter("Greetings")
+// greetings: Greeter = Greeter("Greetings")
+functionWithImplicit("Leo")(greetings)
 // res9: String = "Greetings Leo"
 ```
 
@@ -191,7 +191,7 @@ Define an implicit class. The name is not usually used in code after it is defin
 ```scala
 implicit class PersonSyntax(person:Person) {
     def asIdentifiable:Identifiable = new  Identifiable {
-    override def id = s"${person.givenName} ${person.familyName}"
+        override def id = s"${person.givenName} ${person.familyName}"
     } 
 }
 ```
