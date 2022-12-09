@@ -136,10 +136,10 @@ def birdInfo(b:Bird):String = {
 }
 val birds = List(new Bird, new Owl, new Crow, new Penguin)
 // birds: List[Bird] = List(
-//   repl.MdocSession$MdocApp$Bird@19a968e3,
-//   repl.MdocSession$MdocApp$Owl@290bbb8a,
-//   repl.MdocSession$MdocApp$Crow@71181254,
-//   repl.MdocSession$MdocApp$Penguin@4eafcb5
+//   repl.MdocSession$MdocApp$Bird@6379def4,
+//   repl.MdocSession$MdocApp$Owl@40cda4e6,
+//   repl.MdocSession$MdocApp$Crow@76db60cc,
+//   repl.MdocSession$MdocApp$Penguin@5a2b4e67
 // )
 
 "\n"+birds.map(birdInfo).mkString("\n")
@@ -152,7 +152,10 @@ val birds = List(new Bird, new Owl, new Crow, new Penguin)
 
 ## Putting it together to make a polymorphic data structure
 
-A polymorphic Tree
+A polymorphic Tree. This can hold different types. 
+Tree is a type constructor for types such as Tree[Int] or Tree[String]. 
+The instances of the Tree[T] are of the subtypes, Empty and Node[T]
+
 ```scala
 sealed trait Tree[+T]
 
@@ -161,24 +164,26 @@ case class Node[T](value:T,left:Tree[T] , right: Tree[T]) extends Tree[T] {
   override def productPrefix = "Tree"
 }
 ```
-A companion object with a couple ways to get a tree instance, and a map method
+A companion object with a couple ways to get a tree instance, and map and fold methods. 
+These methods have type parameters, and are parametrically polymorphic
 
 ```scala
 object Tree {
   def empty[T]:Tree[T] = Empty
+  
   def apply[T](t:T, left:Tree[T] = empty, right: Tree[T] = empty):Tree[T] = Node(t, left, right)
-  def map[A,B](tree:Tree[A])( f:A=>B):Tree[B] = tree match {
+  
+  def map[A,B](tree:Tree[A])( f:A => B):Tree[B] = tree match {
     case Empty => Empty
     case Node(a,left,right) => Node(f(a), map(left)(f), map(right)(f))
   }
   
-   def foldLeft[A, B](fa: Tree[A], b: B)(f: (B, A) => B):B = fa match {
+  def fold[A, B](fa: Tree[A], b: B)(f: (B, A) => B):B = fa match {
     case Empty => b
     case Node(a,left,right) => {
       val newB = f(b,a)
-      val lb = foldLeft(left,newB)(f)
-      val rb = foldLeft(right,lb)(f)
-      rb
+      val lb = fold(left,newB)(f)
+      fold(right,lb)(f)      
     }
   }
 }
@@ -200,6 +205,11 @@ val nums:Tree[Int] = Tree(5,
 
 val nonums = Tree.empty[Int]
 // nonums: Tree[Int] = Empty
+```
+And make some function calls.
+
+Transform the tree values with map.
+```scala
 Tree.map(nums)(_ + 1)
 // res8: Tree[Int] = Tree(
 //   6,
@@ -214,16 +224,17 @@ Tree.map(nums)(_ * 2)
 // )
 Tree.map(nonums)(_ + 1)
 // res10: Tree[Int] = Empty
-
-
-Tree.foldLeft(nums, 0)((b , x) => b + x)
+```
+Convert the Tree[A] to a new type B with fold.
+```scala
+Tree.fold(nums, 0)((b , x) => b + x)
 // res11: Int = 14
-Tree.foldLeft(nums, 0)(_ - _)
+Tree.fold(nums, 0)(_ - _)
 // res12: Int = -14
-Tree.foldLeft(nums, 1)(_ * _)
+Tree.fold(nums, 1)(_ * _)
 // res13: Int = 120
-Tree.foldLeft(nums, "")(_ + _)
+Tree.fold(nums, "")(_ + _)
 // res14: String = "5342"
-Tree.foldLeft(nums, List.empty[Int])((l,v) => v :: l)
+Tree.fold(nums, List.empty[Int])((l,v) => v :: l)
 // res15: List[Int] = List(2, 4, 3, 5)
 ```
