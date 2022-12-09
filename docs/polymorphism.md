@@ -136,10 +136,10 @@ def birdInfo(b:Bird):String = {
 }
 val birds = List(new Bird, new Owl, new Crow, new Penguin)
 // birds: List[Bird] = List(
-//   repl.MdocSession$MdocApp$Bird@47f65167,
-//   repl.MdocSession$MdocApp$Owl@27252395,
-//   repl.MdocSession$MdocApp$Crow@2f8038bf,
-//   repl.MdocSession$MdocApp$Penguin@3dcac793
+//   repl.MdocSession$MdocApp$Bird@19a968e3,
+//   repl.MdocSession$MdocApp$Owl@290bbb8a,
+//   repl.MdocSession$MdocApp$Crow@71181254,
+//   repl.MdocSession$MdocApp$Penguin@4eafcb5
 // )
 
 "\n"+birds.map(birdInfo).mkString("\n")
@@ -171,6 +171,16 @@ object Tree {
     case Empty => Empty
     case Node(a,left,right) => Node(f(a), map(left)(f), map(right)(f))
   }
+  
+   def foldLeft[A, B](fa: Tree[A], b: B)(f: (B, A) => B):B = fa match {
+    case Empty => b
+    case Node(a,left,right) => {
+      val newB = f(b,a)
+      val lb = foldLeft(left,newB)(f)
+      val rb = foldLeft(right,lb)(f)
+      rb
+    }
+  }
 }
 ```
 
@@ -196,92 +206,24 @@ Tree.map(nums)(_ + 1)
 //   Tree(4, Empty, Empty),
 //   Tree(5, Tree(3, Empty, Empty), Empty)
 // )
-Tree.map(nonums)(_ + 1)
-// res9: Tree[Int] = Empty
-```
-
-Let's provide Functor and Foldable type classes
-```scala
-import cats._
-
-implicit val treeFunctorFoldable:Functor[Tree] with Foldable[Tree] = new Functor[Tree] with Foldable[Tree] {
-  override def map[A, B](fa: Tree[A])(f: A => B):Tree[B] =
-    Tree.map(fa)(f)
-
-  override def foldLeft[A, B](fa: Tree[A], b: B)(f: (B, A) => B):B = fa match {
-    case Empty => b
-    case Node(a,left,right) => {
-      val newB = f(b,a)
-      val lb = foldLeft(left,newB)(f)
-      val rb = foldLeft(right,lb)(f)
-      rb
-    }
-  }
-
-  override def foldRight[A, B](fa: Tree[A], b: Eval[B])(f: (A, Eval[B]) => Eval[B]):Eval[B]
-  =  fa match {
-    case Empty => b
-  case Node(a,left,right) =>
-    val newB = f(a,b)
-    val rb = foldRight(right,newB)(f)
-    val lb = foldRight(left, rb)(f)
-    lb
-  }
-}
-// treeFunctorFoldable: Functor[Tree] with Foldable[Tree] = repl.MdocSession$MdocApp$$anon$1@652392fb
-```
-
-Now we can use syntax to access various methods
-
-From Functor
-
-```scala
-import cats.syntax.functor._
-nums.map(_ * 2)
-// res10: Tree[Int] = Tree(
+Tree.map(nums)(_ * 2)
+// res9: Tree[Int] = Tree(
 //   10,
 //   Tree(6, Empty, Empty),
 //   Tree(8, Tree(4, Empty, Empty), Empty)
 // )
-nums.void
-// res11: Tree[Unit] = Tree(
-//   (),
-//   Tree((), Empty, Empty),
-//   Tree((), Tree((), Empty, Empty), Empty)
-// )
-nonums.map(_ * 42)
-// res12: Tree[Int] = Empty
-```
+Tree.map(nonums)(_ + 1)
+// res10: Tree[Int] = Empty
 
-From Foldable
-```scala
-import cats.syntax.foldable._
 
-nums.foldLeft(0)((b , x) => b + x)
-// res13: Int = 14
-nums.foldLeft(0)(_ - _)
-// res14: Int = -14
-nums.foldLeft(1)(_ * _)
-// res15: Int = 120
-nums.foldLeft("")(_ + _)
-// res16: String = "5342"
-
-nums.foldLeft(List.empty[Int])((l,v) => v :: l)
-// res17: List[Int] = List(2, 4, 3, 5)
-nums.foldRight(Eval.now(List.empty[Int]))((v,l) => l.map(v :: _)).value
-// res18: List[Int] = List(3, 2, 4, 5)
-nums.toList
-// res19: List[Int] = List(5, 3, 4, 2)
-
-nums.isEmpty
-// res20: Boolean = false
-nonums.isEmpty
-// res21: Boolean = true
-
-nums.get(0)
-// res22: Option[Int] = Some(3)
-nums.get(5)
-// res23: Option[Int] = None
-nonums.get(0)
-// res24: Option[Int] = None
+Tree.foldLeft(nums, 0)((b , x) => b + x)
+// res11: Int = 14
+Tree.foldLeft(nums, 0)(_ - _)
+// res12: Int = -14
+Tree.foldLeft(nums, 1)(_ * _)
+// res13: Int = 120
+Tree.foldLeft(nums, "")(_ + _)
+// res14: String = "5342"
+Tree.foldLeft(nums, List.empty[Int])((l,v) => v :: l)
+// res15: List[Int] = List(2, 4, 3, 5)
 ```
