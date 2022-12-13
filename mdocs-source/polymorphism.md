@@ -142,6 +142,9 @@ object Tree {
       fold(right,lb)(f)      
     }
   }
+  
+  def unsafeLowest(t:Tree[String]):String = fold(t, List.empty[String])((l,v) => v :: l).min
+  def unsafeLowest(t:Tree[Int]):Int = fold(t, List.empty[Int])((l,v) => v :: l).min
 }
 ```
 
@@ -155,6 +158,9 @@ val nums:Tree[Int] = Tree(5,
 )
 
 val nonums = Tree.empty[Int]
+
+val doubles: Tree[Double] = Tree(5.0, left = Tree(3.0), right = Empty)
+val strings: Tree[String] = Tree("branch", left = Tree("leaf"), right = Empty)
 ```
 And make some function calls.
 
@@ -169,6 +175,15 @@ Convert the Tree[A] to a new type B with fold.
 Tree.fold(nums, 0)((b , x) => b + x)
 Tree.fold(nums, 0)(_ - _)
 Tree.fold(nums, 1)(_ * _)
+Tree.fold(strings, "")(_ + _)
 Tree.fold(nums, "")(_ + _)
 Tree.fold(nums, List.empty[Int])((l,v) => v :: l)
+```
+Use an overloaded tree method
+```scala mdoc
+Tree.unsafeLowest(nums)
+Tree.unsafeLowest(strings)
+```
+```scala mdoc:fail
+Tree.unsafeLowest(doubles)
 ```

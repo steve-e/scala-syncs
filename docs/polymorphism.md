@@ -123,10 +123,10 @@ def birdInfo(b:Bird):String = {
 }
 val birds = List(new Bird, new Owl, new Crow, new Penguin)
 // birds: List[Bird] = List(
-//   repl.MdocSession$MdocApp$Bird@37fa1787,
-//   repl.MdocSession$MdocApp$Owl@1cdc7e5b,
-//   repl.MdocSession$MdocApp$Crow@3a3c7e60,
-//   repl.MdocSession$MdocApp$Penguin@5f9732e3
+//   repl.MdocSession$MdocApp$Bird@74d65608,
+//   repl.MdocSession$MdocApp$Owl@7762963d,
+//   repl.MdocSession$MdocApp$Crow@243e60e,
+//   repl.MdocSession$MdocApp$Penguin@5de12073
 // )
 
 "\n"+birds.map(birdInfo).mkString("\n")
@@ -173,6 +173,9 @@ object Tree {
       fold(right,lb)(f)      
     }
   }
+  
+  def unsafeLowest(t:Tree[String]):String = fold(t, List.empty[String])((l,v) => v :: l).min
+  def unsafeLowest(t:Tree[Int]):Int = fold(t, List.empty[Int])((l,v) => v :: l).min
 }
 ```
 
@@ -192,6 +195,11 @@ val nums:Tree[Int] = Tree(5,
 
 val nonums = Tree.empty[Int]
 // nonums: Tree[Int] = Empty
+
+val doubles: Tree[Double] = Tree(5.0, left = Tree(3.0), right = Empty)
+// doubles: Tree[Double] = Tree(5.0, Tree(3.0, Empty, Empty), Empty)
+val strings: Tree[String] = Tree("branch", left = Tree("leaf"), right = Empty)
+// strings: Tree[String] = Tree("branch", Tree("leaf", Empty, Empty), Empty)
 ```
 And make some function calls.
 
@@ -220,8 +228,26 @@ Tree.fold(nums, 0)(_ - _)
 // res13: Int = -14
 Tree.fold(nums, 1)(_ * _)
 // res14: Int = 120
+Tree.fold(strings, "")(_ + _)
+// res15: String = "branchleaf"
 Tree.fold(nums, "")(_ + _)
-// res15: String = "5342"
+// res16: String = "5342"
 Tree.fold(nums, List.empty[Int])((l,v) => v :: l)
-// res16: List[Int] = List(2, 4, 3, 5)
+// res17: List[Int] = List(2, 4, 3, 5)
+```
+Use an overloaded tree method
+```scala
+Tree.unsafeLowest(nums)
+// res18: Int = 2
+Tree.unsafeLowest(strings)
+// res19: String = "branch"
+```
+```scala
+Tree.unsafeLowest(doubles)
+// error: overloaded method value unsafeLowest with alternatives:
+//   (t: repl.MdocSession.MdocApp.Tree[Int])Int <and>
+//   (t: repl.MdocSession.MdocApp.Tree[String])String
+//  cannot be applied to (repl.MdocSession.MdocApp.Tree[Double])
+// Tree.unsafeLowest(doubles)
+// ^^^^^^^^^^^^^^^^^
 ```
