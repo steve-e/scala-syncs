@@ -2,7 +2,7 @@
 
 Polymorphism allows an instance of a type to take on multiple behaviours.
 Polymorphism comes from the Greek meaning many shapes.
-There different ways that this can be implemented in different languages.
+There are different ways that this can be implemented in different languages.
 We will look at some in scala
 
 ## Ad hoc Polymorphism
@@ -47,7 +47,7 @@ concatenate(a, b)
 //                ^
 ```
 
-One way to fix that is to overload the function concatenate
+One way to fix that is to overload the function `concatenate`
 
 ```scala
 def concatenate(a:(Int, Int, Int), b:(Int, Int, Int)):(Int, Int, Int, Int, Int, Int) =
@@ -58,38 +58,25 @@ concatenate(a, b)
 ```
 Method overloading is used a lot in the math library. 
 For example `max` is implemented for various numeric types. 
-Here are implementations equivalent to what the library does for Int and Double
+Here are simple implementations for Int and Float
 ```scala
 def max(a: Int, b: Int): Int = if (a >= b) a else b
+def max(a: Float, b: Float): Float = if (a >= b) a else b
 
 max(2, 4)
 // res3: Int = 4
+max(22/7.0F, 3.14F)
+// res4: Float = 3.142857F
 ```
-But we have not reimplemented max for Float or Double, so that will fail
+But we have not implemented max for Double, so that will fail
 ```scala
-max(2.1, 199/99.0)
-// error: type mismatch;
-//  found   : Int(199)
-//  required: ?{def /(x$1: ? >: Double(99.0)): ?}
-// Note that implicit conversions are not applicable because they are ambiguous:
-//  both method int2long in object Int of type (x: Int)Long
-//  and method int2float in object Int of type (x: Int)Float
-//  are possible conversion functions from Int(199) to ?{def /(x$1: ? >: Double(99.0)): ?}
-// max(2.1, 199/99.0)
-//          ^^^
-// error: type mismatch;
-//  found   : Double(2.1)
-//  required: Int
-// max(2.1, 199/99.0)
-//     ^^^
-// error: overloaded method value / with alternatives:
-//   (x: Int)Int <and>
-//   (x: Char)Int <and>
-//   (x: Short)Int <and>
-//   (x: Byte)Int
-//  cannot be applied to (Double)
-// max(2.1, 199/99.0)
-//          ^^^^
+max(2.1D, 199/99.0D)
+// error: overloaded method value max with alternatives:
+//   (a: Float,b: Float)Float <and>
+//   (a: Int,b: Int)Int
+//  cannot be applied to (Double, Double)
+// max(2.1D, 199/99.0D)
+// ^^^
 ```
 
 ## Parametric Polymorphism
@@ -100,9 +87,9 @@ We can create a function that relies on a type parameter
 def duplicate[T](t:T):(T, T) = (t,t)
 
 duplicate(2)
-// res5: (Int, Int) = (2, 2)
+// res6: (Int, Int) = (2, 2)
 duplicate("both")
-// res6: (String, String) = ("both", "both")
+// res7: (String, String) = ("both", "both")
 ```
 
 ## Subtyping
@@ -136,14 +123,14 @@ def birdInfo(b:Bird):String = {
 }
 val birds = List(new Bird, new Owl, new Crow, new Penguin)
 // birds: List[Bird] = List(
-//   repl.MdocSession$MdocApp$Bird@6379def4,
-//   repl.MdocSession$MdocApp$Owl@40cda4e6,
-//   repl.MdocSession$MdocApp$Crow@76db60cc,
-//   repl.MdocSession$MdocApp$Penguin@5a2b4e67
+//   repl.MdocSession$MdocApp$Bird@37fa1787,
+//   repl.MdocSession$MdocApp$Owl@1cdc7e5b,
+//   repl.MdocSession$MdocApp$Crow@3a3c7e60,
+//   repl.MdocSession$MdocApp$Penguin@5f9732e3
 // )
 
 "\n"+birds.map(birdInfo).mkString("\n")
-// res7: String = """
+// res8: String = """
 // birds can fly, tweet tweet
 // owls can fly, Terwit Terwoo
 // crows can fly, caw caw
@@ -211,30 +198,30 @@ And make some function calls.
 Transform the tree values with map.
 ```scala
 Tree.map(nums)(_ + 1)
-// res8: Tree[Int] = Tree(
+// res9: Tree[Int] = Tree(
 //   6,
 //   Tree(4, Empty, Empty),
 //   Tree(5, Tree(3, Empty, Empty), Empty)
 // )
 Tree.map(nums)(_ * 2)
-// res9: Tree[Int] = Tree(
+// res10: Tree[Int] = Tree(
 //   10,
 //   Tree(6, Empty, Empty),
 //   Tree(8, Tree(4, Empty, Empty), Empty)
 // )
 Tree.map(nonums)(_ + 1)
-// res10: Tree[Int] = Empty
+// res11: Tree[Int] = Empty
 ```
 Convert the Tree[A] to a new type B with fold.
 ```scala
 Tree.fold(nums, 0)((b , x) => b + x)
-// res11: Int = 14
+// res12: Int = 14
 Tree.fold(nums, 0)(_ - _)
-// res12: Int = -14
+// res13: Int = -14
 Tree.fold(nums, 1)(_ * _)
-// res13: Int = 120
+// res14: Int = 120
 Tree.fold(nums, "")(_ + _)
-// res14: String = "5342"
+// res15: String = "5342"
 Tree.fold(nums, List.empty[Int])((l,v) => v :: l)
-// res15: List[Int] = List(2, 4, 3, 5)
+// res16: List[Int] = List(2, 4, 3, 5)
 ```

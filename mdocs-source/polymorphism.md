@@ -2,7 +2,7 @@
 
 Polymorphism allows an instance of a type to take on multiple behaviours.
 Polymorphism comes from the Greek meaning many shapes.
-There different ways that this can be implemented in different languages.
+There are different ways that this can be implemented in different languages.
 We will look at some in scala
 
 ## Ad hoc Polymorphism
@@ -33,7 +33,7 @@ val b = (5, 10, 15)
 concatenate(a, b)
 ```
 
-One way to fix that is to overload the function concatenate
+One way to fix that is to overload the function `concatenate`
 
 ```scala mdoc
 def concatenate(a:(Int, Int, Int), b:(Int, Int, Int)):(Int, Int, Int, Int, Int, Int) =
@@ -43,16 +43,18 @@ concatenate(a, b)
 ```
 Method overloading is used a lot in the math library. 
 For example `max` is implemented for various numeric types. 
-Here are implementations equivalent to what the library does for Int and Double
+Here are simple implementations for Int and Float
 ```scala mdoc
-  def max(a: Int, b: Int): Int = if (a >= b) a else b
+def max(a: Int, b: Int): Int = if (a >= b) a else b
+def max(a: Float, b: Float): Float = if (a >= b) a else b
 
 max(2, 4)
+max(22/7.0F, 3.14F)
 
 ```
-But we have not reimplemented max for Float or Double, so that will fail
+But we have not implemented max for Double, so that will fail
 ```scala mdoc:fail
-max(2.1, 199/99.0)
+max(2.1D, 199/99.0D)
 ```
 
 ## Parametric Polymorphism
