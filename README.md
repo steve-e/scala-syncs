@@ -17,6 +17,7 @@ sbt docs/mdoc
 ### Docs with embedded scala execution
 - [Implicits](docs/implicits.md) 
 - [Polymorphism](docs/polymorphism.md)
+- More on [Companion Objects](docs/companion-objects.md)
 
 ### Absolute basics on of Category theory
 - [What is a category](docs/category.md)

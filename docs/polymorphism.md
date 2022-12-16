@@ -123,10 +123,10 @@ def birdInfo(b:Bird):String = {
 }
 val birds = List(new Bird, new Owl, new Crow, new Penguin)
 // birds: List[Bird] = List(
-//   repl.MdocSession$MdocApp$Bird@74d65608,
-//   repl.MdocSession$MdocApp$Owl@7762963d,
-//   repl.MdocSession$MdocApp$Crow@243e60e,
-//   repl.MdocSession$MdocApp$Penguin@5de12073
+//   repl.MdocSession$MdocApp$Bird@7b63a813,
+//   repl.MdocSession$MdocApp$Owl@253bba70,
+//   repl.MdocSession$MdocApp$Crow@73401ed5,
+//   repl.MdocSession$MdocApp$Penguin@1167bebb
 // )
 
 "\n"+birds.map(birdInfo).mkString("\n")
