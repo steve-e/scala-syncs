@@ -1,5 +1,7 @@
 # More on Companion Objects
 
+## Access to private members
+
 A class can have private members, as can an object
 ```scala
 class SimpleOne {
@@ -22,8 +24,8 @@ object AlsoSimpleTwo {
     private val alsoSecret:Boolean = true
 }
 // error: value alsoSecret in object AlsoSimpleTwo cannot be accessed in object repl.MdocSession.MdocApp.AlsoSimpleTwo
-//     private val badBoolean = AlsoSimpleTwo.alsoSecret    
-//                              ^^^^^^^^^^^^^^^^^^^^^^^^
+//     private val alsoSecret:Boolean = true
+//                 ^^^^^^^^^^
 ```
 
 An object cannot access the private members of a class
@@ -53,4 +55,65 @@ object ClassWithCompanion {
     val publicInt:Int = (new ClassWithCompanion).secret
     private val alsoSecret:Boolean = true
 }
+```
+
+## Apply method
+
+```scala
+class Hours(hours:Int) {
+
+    override def toString:String = s"Hours : $hours"
+    
+    val time:String = {
+        if(hours >= 0) {
+            if(hours < 13) s"$hours am"
+            else if (hours < 24 ) s"${hours - 12} pm"
+            else "the future"
+        }
+        else "the past"
+    }
+}
+
+object Hours {
+    def apply(hours:Int):Hours = new Hours(hours)
+}
+val early = new Hours(3)
+// early: Hours = Hours : 3
+early.time
+// res2: String = "3 am"
+val late = new Hours(23)
+// late: Hours = Hours : 23
+late.time
+// res3: String = "11 pm"
+```
+## Unapply Method
+
+An unapply method can be defined on the companion object, to use in match expressions
+
+```scala
+class Holder(val s:String, val i:Int) {
+    override def toString:String = s"Holder($s, $i)"
+}
+
+object Holder {
+     def unapply(holder:Holder):Option[(String,Int)] = Some((holder.s, holder.i))
+}
+```
+The unapply method is not called explicitly but is used in a partial function, in a case expression
+
+```scala
+def extractString(ar:AnyRef):String = ar match {
+    case Some(a) => a.toString
+    case Holder(name, age) => s"$name $age"
+    case _ => "whatever"
+}
+ 
+val holder = new Holder("Hodor", 19)
+// holder: Holder = Holder(Hodor, 19)
+extractString(holder)
+// res4: String = "Hodor 19"
+extractString(Some(true))
+// res5: String = "true"
+extractString(List(true)) 
+// res6: String = "whatever"
 ```
