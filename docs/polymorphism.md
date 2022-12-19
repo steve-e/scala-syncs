@@ -101,6 +101,7 @@ class Bird {
     def name = getClass.getSimpleName.toLowerCase
     def canFly:Boolean = true
     def sing:String = "tweet tweet"
+    override def toString:String = getClass.getSimpleName
 }
 
 class Owl extends Bird {
@@ -122,12 +123,7 @@ def birdInfo(b:Bird):String = {
 
 }
 val birds = List(new Bird, new Owl, new Crow, new Penguin)
-// birds: List[Bird] = List(
-//   repl.MdocSession$MdocApp$Bird@4d404d46,
-//   repl.MdocSession$MdocApp$Owl@48516198,
-//   repl.MdocSession$MdocApp$Crow@2c662bc5,
-//   repl.MdocSession$MdocApp$Penguin@3f2d4284
-// )
+// birds: List[Bird] = List(Bird, Owl, Crow, Penguin)
 
 "\n"+birds.map(birdInfo).mkString("\n")
 // res8: String = """

@@ -80,6 +80,7 @@ class Bird {
     def name = getClass.getSimpleName.toLowerCase
     def canFly:Boolean = true
     def sing:String = "tweet tweet"
+    override def toString:String = getClass.getSimpleName
 }
 
 class Owl extends Bird {
