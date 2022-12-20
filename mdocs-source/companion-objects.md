@@ -58,7 +58,7 @@ object ClassWithCompanion {
 ## Apply method
 
 An apply method on an object can be called without using its name.
-The call looks like a construct call without new.
+The call looks like a constructor call without `new`.
 This technique is usually used for exactly that purpose, as a succinct factory method. 
 
 ```scala mdoc
@@ -98,17 +98,20 @@ object Holder {
      def unapply(holder:Holder):Option[(String,Int)] = Some((holder.s, holder.i))
 }
 ```
-The unapply method is not called explicitly but is used in a partial function, in a case expression
+The unapply method is not usually called explicitly but is used in a partial function, in a case expression
 
 ```scala mdoc
+val example = new Holder("Hodor", 19)
+
+val Holder(name, age) = example
+
 def extractString(ar:AnyRef):String = ar match {
     case Some(a) => a.toString
     case Holder(name, age) => s"$name $age"
     case _ => "whatever"
 }
  
-val holder = new Holder("Hodor", 19)
-extractString(holder)
+extractString(example)
 extractString(Some(true))
 extractString(List(true)) 
 

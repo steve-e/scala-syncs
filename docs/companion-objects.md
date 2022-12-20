@@ -62,7 +62,7 @@ object ClassWithCompanion {
 ## Apply method
 
 An apply method on an object can be called without using its name.
-The call looks like a construct call without new.
+The call looks like a constructor call without `new`.
 This technique is usually used for exactly that purpose, as a succinct factory method. 
 
 ```scala
@@ -106,18 +106,23 @@ object Holder {
      def unapply(holder:Holder):Option[(String,Int)] = Some((holder.s, holder.i))
 }
 ```
-The unapply method is not called explicitly but is used in a partial function, in a case expression
+The unapply method is not usually called explicitly but is used in a partial function, in a case expression
 
 ```scala
+val example = new Holder("Hodor", 19)
+// example: Holder = Holder(Hodor, 19)
+
+val Holder(name, age) = example
+// name: String = "Hodor"
+// age: Int = 19
+
 def extractString(ar:AnyRef):String = ar match {
     case Some(a) => a.toString
     case Holder(name, age) => s"$name $age"
     case _ => "whatever"
 }
  
-val holder = new Holder("Hodor", 19)
-// holder: Holder = Holder(Hodor, 19)
-extractString(holder)
+extractString(example)
 // res4: String = "Hodor 19"
 extractString(Some(true))
 // res5: String = "true"
@@ -149,7 +154,7 @@ case class Foo(value:String)
 implicit val fooPrinter = new Printer[Foo] {
     def print(f:Foo) = f.value.toUpperCase
 }
-// fooPrinter: AnyRef with Printer[Foo] = repl.MdocSession$MdocApp$$anon$1@2828cec9
+// fooPrinter: AnyRef with Printer[Foo] = repl.MdocSession$MdocApp$$anon$1@75472fef
 
 val foo1 = Foo("keep the noise down")
 // foo1: Foo = Foo("keep the noise down")
