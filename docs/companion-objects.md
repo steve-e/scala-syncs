@@ -1,7 +1,5 @@
 # More on Companion Objects
 Companion objects are one of the characteristic language features of Scala.
-Values defined in any object are only initialised once, so they can be used for defining constants.
-The can also be used for defining methods that are not specific to an instance of a class.
 
 Here we will look at access control, apply and unapply methods, and implicits
 
@@ -14,7 +12,7 @@ class SimpleOne {
 }
 
 object AlsoSimpleOne {
-    private val alsoSecret:Boolean = true
+    private val secretBoolean:Boolean = true
 }
 ```
 A class cannot access the private members of an object
@@ -22,15 +20,13 @@ A class cannot access the private members of an object
 ```scala
 class SimpleBad {
     private val secret:Int = 42
-    private val badBoolean = AlsoSimpleTwo.alsoSecret    
+    private val badBoolean = AlsoSimpleTwo.secretBoolean    
 }
 
 object AlsoSimpleTwo {
-    private val alsoSecret:Boolean = true
+    private val secretBoolean:Boolean = true
 }
-// error: value alsoSecret in object AlsoSimpleTwo cannot be accessed in object repl.MdocSession.MdocApp.AlsoSimpleTwo
-//     private val goodBoolean = ClassWithCompanion.alsoSecret    
-//                                                  ^^^^^^^^^^
+// error: value secretBoolean in object AlsoSimpleTwo cannot be accessed in object repl.MdocSession.MdocApp.AlsoSimpleTwo
 ```
 
 An object cannot access the private members of a class
@@ -153,7 +149,7 @@ case class Foo(value:String)
 implicit val fooPrinter = new Printer[Foo] {
     def print(f:Foo) = f.value.toUpperCase
 }
-// fooPrinter: AnyRef with Printer[Foo] = repl.MdocSession$MdocApp$$anon$1@41011500
+// fooPrinter: AnyRef with Printer[Foo] = repl.MdocSession$MdocApp$$anon$1@2828cec9
 
 val foo1 = Foo("keep the noise down")
 // foo1: Foo = Foo("keep the noise down")

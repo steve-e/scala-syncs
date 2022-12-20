@@ -1,7 +1,5 @@
 # More on Companion Objects
 Companion objects are one of the characteristic language features of Scala.
-Values defined in any object are only initialised once, so they can be used for defining constants.
-The can also be used for defining methods that are not specific to an instance of a class.
 
 Here we will look at access control, apply and unapply methods, and implicits
 
@@ -14,7 +12,7 @@ class SimpleOne {
 }
 
 object AlsoSimpleOne {
-    private val alsoSecret:Boolean = true
+    private val secretBoolean:Boolean = true
 }
 ```
 A class cannot access the private members of an object
@@ -22,11 +20,11 @@ A class cannot access the private members of an object
 ```scala mdoc:fail
 class SimpleBad {
     private val secret:Int = 42
-    private val badBoolean = AlsoSimpleTwo.alsoSecret    
+    private val badBoolean = AlsoSimpleTwo.secretBoolean    
 }
 
 object AlsoSimpleTwo {
-    private val alsoSecret:Boolean = true
+    private val secretBoolean:Boolean = true
 }
 ```
 
