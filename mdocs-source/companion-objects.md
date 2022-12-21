@@ -91,6 +91,7 @@ late.time
 An unapply method can be defined on the companion object.
 It can be used to extract values from an object and is used in match expressions
 
+A successful match returns a Some, a failed match returns a None
 ```scala mdoc
 class Holder(val s:String, val i:Int) {
     override def toString:String = s"Holder($s, $i)"
@@ -108,19 +109,20 @@ The unapply method is not usually called explicitly but is used in a partial fun
 val example = new Holder("Hodor", 19)
 val badExample = new Holder("Circe", -1)
 
-val Holder(name, age) = example
+val Holder(exName, exAge) = example
+
+// use a variable defined in the pattern above
+exName.toUpperCase
+
 val Some((a, i)) = Holder.unapply(example)
 
-name.toUpperCase
 
 def extractString(ar:AnyRef):String = ar match {
-    case e:Either[_,_] if e.isRight  => e.fold(_.toString,_.toString)
     case Some(a) => a.toString
     case Holder(name, age) => s"$name $age"
     case _ => "whatever"
 }
  
-extractString(Left(123)) 
 extractString(example)
 extractString(badExample)
 extractString(Some(true))

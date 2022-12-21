@@ -99,6 +99,7 @@ late.time
 An unapply method can be defined on the companion object.
 It can be used to extract values from an object and is used in match expressions
 
+A successful match returns a Some, a failed match returns a None
 ```scala
 class Holder(val s:String, val i:Int) {
     override def toString:String = s"Holder($s, $i)"
@@ -118,33 +119,33 @@ val example = new Holder("Hodor", 19)
 val badExample = new Holder("Circe", -1)
 // badExample: Holder = Holder(Circe, -1)
 
-val Holder(name, age) = example
-// name: String = "Hodor"
-// age: Int = 19
+val Holder(exName, exAge) = example
+// exName: String = "Hodor"
+// exAge: Int = 19
+
+// use a variable defined in the pattern above
+exName.toUpperCase
+// res4: String = "HODOR"
+
 val Some((a, i)) = Holder.unapply(example)
 // a: String = "Hodor"
 // i: Int = 19
 
-name.toUpperCase
-// res4: String = "HODOR"
 
 def extractString(ar:AnyRef):String = ar match {
-    case e:Either[_,_] if e.isRight  => e.fold(_.toString,_.toString)
     case Some(a) => a.toString
     case Holder(name, age) => s"$name $age"
     case _ => "whatever"
 }
  
-extractString(Left(123)) 
-// res5: String = "whatever" 
 extractString(example)
-// res6: String = "Hodor 19"
+// res5: String = "Hodor 19"
 extractString(badExample)
-// res7: String = "whatever"
+// res6: String = "whatever"
 extractString(Some(true))
-// res8: String = "true"
+// res7: String = "true"
 extractString(List(true)) 
-// res9: String = "whatever"
+// res8: String = "whatever"
 ```
 ## Implicits resolution and companion objects
 
@@ -171,13 +172,13 @@ case class Foo(value:String)
 implicit val fooPrinter = new Printer[Foo] {
     def print(f:Foo) = f.value.toUpperCase
 }
-// fooPrinter: AnyRef with Printer[Foo] = repl.MdocSession$MdocApp$$anon$1@7e755c5e
+// fooPrinter: AnyRef with Printer[Foo] = repl.MdocSession$MdocApp$$anon$1@61147891
 
 val foo1 = Foo("keep the noise down")
 // foo1: Foo = Foo("keep the noise down")
 
 showIt(foo1)
-// res10: String = "KEEP THE NOISE DOWN"
+// res9: String = "KEEP THE NOISE DOWN"
 ```
 
 If the implicit is defined in some other object instead of locally, it cannot be found.
@@ -214,7 +215,7 @@ object Bar {
 val bar1 = Bar("please be quiet")
 // bar1: Bar = Bar("please be quiet")
 showIt(bar1)
-// res12: String = "PLEASE BE QUIET"
+// res11: String = "PLEASE BE QUIET"
 ```
 
 We can import an implicit from another scope
@@ -233,7 +234,7 @@ val bar2 = Bar2("don't make a noise")
 // bar2: Bar2 = Bar2("don't make a noise")
 import Another2._
 showIt(bar2)
-// res13: String = "DON'T MAKE A NOISE"
+// res12: String = "DON'T MAKE A NOISE"
 ```
 or use `showIt` without an implicit by passing a `Printer` explicitly
 
@@ -250,5 +251,5 @@ val bar3 = Bar3("whisper")
 // bar3: Bar3 = Bar3("whisper")
 
 showIt(bar3)(Another3.barPrinter)
-// res14: String = "WHISPER"
+// res13: String = "WHISPER"
 ```
