@@ -56,6 +56,7 @@ class ClassWithCompanion {
 object ClassWithCompanion {
     val publicInt:Int = (new ClassWithCompanion).secret
     private val alsoSecret:Boolean = true
+    def doSomething(c:ClassWithCompanion) = c.secret
 }
 ```
 
@@ -103,7 +104,9 @@ class Holder(val s:String, val i:Int) {
 }
 
 object Holder {
-     def unapply(holder:Holder):Option[(String,Int)] = Some((holder.s, holder.i))
+     def unapply(holder:Holder):Option[(String,Int)] = {
+        if(holder.i > 0) Some((holder.s,holder.i)) else None
+     }
 }
 ```
 The unapply method is not usually called explicitly but is used in a partial function, in a case expression
@@ -111,23 +114,36 @@ The unapply method is not usually called explicitly but is used in a partial fun
 ```scala
 val example = new Holder("Hodor", 19)
 // example: Holder = Holder(Hodor, 19)
+val badExample = new Holder("Circe", -1)
+// badExample: Holder = Holder(Circe, -1)
 
 val Holder(name, age) = example
 // name: String = "Hodor"
 // age: Int = 19
+val Some((a, i)) = Holder.unapply(example)
+// a: String = "Hodor"
+// i: Int = 19
+
+name.toUpperCase
+// res4: String = "HODOR"
 
 def extractString(ar:AnyRef):String = ar match {
+    case e:Either[_,_] if e.isRight  => e.fold(_.toString,_.toString)
     case Some(a) => a.toString
     case Holder(name, age) => s"$name $age"
     case _ => "whatever"
 }
  
+extractString(Left(123)) 
+// res5: String = "whatever" 
 extractString(example)
-// res4: String = "Hodor 19"
+// res6: String = "Hodor 19"
+extractString(badExample)
+// res7: String = "whatever"
 extractString(Some(true))
-// res5: String = "true"
+// res8: String = "true"
 extractString(List(true)) 
-// res6: String = "whatever"
+// res9: String = "whatever"
 ```
 ## Implicits resolution and companion objects
 
@@ -154,13 +170,13 @@ case class Foo(value:String)
 implicit val fooPrinter = new Printer[Foo] {
     def print(f:Foo) = f.value.toUpperCase
 }
-// fooPrinter: AnyRef with Printer[Foo] = repl.MdocSession$MdocApp$$anon$1@75472fef
+// fooPrinter: AnyRef with Printer[Foo] = repl.MdocSession$MdocApp$$anon$1@51503087
 
 val foo1 = Foo("keep the noise down")
 // foo1: Foo = Foo("keep the noise down")
 
 showIt(foo1)
-// res7: String = "KEEP THE NOISE DOWN"
+// res10: String = "KEEP THE NOISE DOWN"
 ```
 
 If the implicit is defined in some other object instead of locally, it cannot be found.
@@ -197,5 +213,41 @@ object Bar {
 val bar1 = Bar("please be quiet")
 // bar1: Bar = Bar("please be quiet")
 showIt(bar1)
-// res9: String = "PLEASE BE QUIET"
+// res12: String = "PLEASE BE QUIET"
+```
+
+We can import an implicit from another scope
+
+
+```scala
+case class Bar2(value:String)
+
+object Another2 {
+    implicit val barPrinter = new Printer[Bar2] {
+        def print(b:Bar2) = b.value.toUpperCase
+    }
+}
+
+val bar2 = Bar2("please be quiet")
+// bar2: Bar2 = Bar2("please be quiet")
+import Another2._
+showIt(bar2)
+// res13: String = "PLEASE BE QUIET"
+```
+and use without importing
+
+```scala
+case class Bar3(value:String)
+
+object Another3 {
+    implicit val barPrinter = new Printer[Bar3] {
+        def print(b:Bar3) = b.value.toUpperCase
+    }
+}
+
+val bar3 = Bar3("please be quiet")
+// bar3: Bar3 = Bar3("please be quiet")
+
+showIt(bar3)(Another3.barPrinter)
+// res14: String = "PLEASE BE QUIET"
 ```

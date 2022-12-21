@@ -52,6 +52,8 @@ class ClassWithCompanion {
 object ClassWithCompanion {
     val publicInt:Int = (new ClassWithCompanion).secret
     private val alsoSecret:Boolean = true
+    
+    def doSomething(c:ClassWithCompanion) = c.secret
 }
 ```
 
@@ -95,23 +97,32 @@ class Holder(val s:String, val i:Int) {
 }
 
 object Holder {
-     def unapply(holder:Holder):Option[(String,Int)] = Some((holder.s, holder.i))
+     def unapply(holder:Holder):Option[(String,Int)] = {
+        if(holder.i > 0) Some((holder.s,holder.i)) else None
+     }
 }
 ```
 The unapply method is not usually called explicitly but is used in a partial function, in a case expression
 
 ```scala mdoc
 val example = new Holder("Hodor", 19)
+val badExample = new Holder("Circe", -1)
 
 val Holder(name, age) = example
+val Some((a, i)) = Holder.unapply(example)
+
+name.toUpperCase
 
 def extractString(ar:AnyRef):String = ar match {
+    case e:Either[_,_] if e.isRight  => e.fold(_.toString,_.toString)
     case Some(a) => a.toString
     case Holder(name, age) => s"$name $age"
     case _ => "whatever"
 }
  
+extractString(Left(123)) 
 extractString(example)
+extractString(badExample)
 extractString(Some(true))
 extractString(List(true)) 
 
@@ -178,5 +189,39 @@ object Bar {
 
 val bar1 = Bar("please be quiet")
 showIt(bar1)
+
+```
+
+We can import an implicit from another scope
+
+
+```scala mdoc
+case class Bar2(value:String)
+
+object Another2 {
+    implicit val barPrinter = new Printer[Bar2] {
+        def print(b:Bar2) = b.value.toUpperCase
+    }
+}
+
+val bar2 = Bar2("please be quiet")
+import Another2._
+showIt(bar2)
+
+```
+and use without importing
+
+```scala mdoc
+case class Bar3(value:String)
+
+object Another3 {
+    implicit val barPrinter = new Printer[Bar3] {
+        def print(b:Bar3) = b.value.toUpperCase
+    }
+}
+
+val bar3 = Bar3("please be quiet")
+
+showIt(bar3)(Another3.barPrinter)
 
 ```
