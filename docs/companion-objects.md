@@ -56,6 +56,7 @@ class ClassWithCompanion {
 object ClassWithCompanion {
     val publicInt:Int = (new ClassWithCompanion).secret
     private val alsoSecret:Boolean = true
+    
     def doSomething(c:ClassWithCompanion) = c.secret
 }
 ```
@@ -170,7 +171,7 @@ case class Foo(value:String)
 implicit val fooPrinter = new Printer[Foo] {
     def print(f:Foo) = f.value.toUpperCase
 }
-// fooPrinter: AnyRef with Printer[Foo] = repl.MdocSession$MdocApp$$anon$1@51503087
+// fooPrinter: AnyRef with Printer[Foo] = repl.MdocSession$MdocApp$$anon$1@7e755c5e
 
 val foo1 = Foo("keep the noise down")
 // foo1: Foo = Foo("keep the noise down")
@@ -228,13 +229,13 @@ object Another2 {
     }
 }
 
-val bar2 = Bar2("please be quiet")
-// bar2: Bar2 = Bar2("please be quiet")
+val bar2 = Bar2("don't make a noise")
+// bar2: Bar2 = Bar2("don't make a noise")
 import Another2._
 showIt(bar2)
-// res13: String = "PLEASE BE QUIET"
+// res13: String = "DON'T MAKE A NOISE"
 ```
-and use without importing
+or use `showIt` without an implicit by passing a `Printer` explicitly
 
 ```scala
 case class Bar3(value:String)
@@ -245,9 +246,9 @@ object Another3 {
     }
 }
 
-val bar3 = Bar3("please be quiet")
-// bar3: Bar3 = Bar3("please be quiet")
+val bar3 = Bar3("whisper")
+// bar3: Bar3 = Bar3("whisper")
 
 showIt(bar3)(Another3.barPrinter)
-// res14: String = "PLEASE BE QUIET"
+// res14: String = "WHISPER"
 ```

@@ -204,12 +204,12 @@ object Another2 {
     }
 }
 
-val bar2 = Bar2("please be quiet")
+val bar2 = Bar2("don't make a noise")
 import Another2._
 showIt(bar2)
 
 ```
-and use without importing
+or use `showIt` without an implicit by passing a `Printer` explicitly
 
 ```scala mdoc
 case class Bar3(value:String)
@@ -220,7 +220,7 @@ object Another3 {
     }
 }
 
-val bar3 = Bar3("please be quiet")
+val bar3 = Bar3("whisper")
 
 showIt(bar3)(Another3.barPrinter)
 
