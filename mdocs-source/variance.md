@@ -24,9 +24,12 @@ val anyRefBox:Box[AnyRef] = stringBox
 ```
 
 In the case of `Box`, it seems that we could have made this assignment safely.
+It would have meant we could get the value as an AnyRef, but it would really be a String.
+A String is an AnyRef so there wouldn't be a problem.
 
 ## Covariance
-We can make a box Covariant by adding a variance annotation
+The type parameter needs to be covariant for this kind of substitution to work
+We can make a box Covariant by adding a variance annotation of `+`
 
 ```scala mdoc
 trait CoHolder[+T] {
@@ -38,6 +41,8 @@ val stringCoBox:CoBox[String] = CoBox("stuff")
 now we can use our `Box` of `String` in place of a `Box` of `AnyRef`
 ```scala mdoc
 val anyRefBox:CoBox[AnyRef] = stringCoBox
+
+anyRefBox.value
 ```
 
 Why not always have covariant types?
@@ -62,12 +67,12 @@ val badString:BadBox[String] = new BadBox("bad")
 val anyBad:BadBox[AnyRef] = badString
 
 // call set with an AnyRef eg Int
-anyBad.set(123)
+anyBad.set(new Integer(123))
 
-// get the stored value, which is typed at String but is an Int!
+// get the stored value, which is typed at String but is an Integer!
 val badlySetString:String = badString.get
 
-// badlySetString now holds Int 123 !!!
+// badlySetString now holds Integer 123 !!!
 ```
 That would be very bad, and so BadBox is disallowed by the compiler
 
@@ -103,8 +108,9 @@ val stringContraBox:ContraBox[String] = anyRefContraBox
 stringContraBox.set("I can set a string")
 
 ```
-Notice that in this class there that `T` does not appear as a value or
-as a return type. For a type to be contravariant it 
+Notice that in this class that `T` does not appear as a value or
+as a return type. 
+For a type to be contravariant it 
 can only appear as a "receiver", such as a parameter type of a method.
 
 *If a type must appear both as a supplier and as a receiver, it must be invariant.*
@@ -119,25 +125,32 @@ trait MyFunction1[-T1, +R]  {
   def apply(v1: T1): R
   override def toString = "MyFunction1"
 }
+```
+We can use it to define and declare functions
+```scala mdoc
 
 val myHolderBoolToBoxString:MyFunction1[CoHolder[Boolean],CoBox[String]] = new MyFunction1[CoHolder[Boolean],CoBox[String]] {
     def apply(b:CoHolder[Boolean]):CoBox[String] = if(b.value) CoBox("Yes!") else CoBox("No!")
 }
 val holderIn:CoHolder[Boolean] = CoBox(true) 
 val boxOut = myHolderBoolToBoxString(holderIn)
+```
+We can assign our function to a new type, taking advantage of both
+covariance and contravariance
+```scala mdoc
 val myBoxBoolToHolderRef: MyFunction1[CoBox[Boolean],CoHolder[AnyRef]] = myHolderBoolToBoxString
 val box = CoBox(false)
 val holderOut = myBoxBoolToHolderRef(box)
-
 ```
 This shows that
 ```scala
-MyFunction1[CoHolder[Boolean],CoBox[String]]
+MyFunction1[CoBox[Boolean],CoHolder[AnyRef]]
 ```
-is a subtype of 
+is a supertype of 
 ```scala
-MyFunction1[CoBox[Boolean],CoHolder[AnyRef]] 
+MyFunction1[CoHolder[Boolean],CoBox[String]]
 ```
 
 because CoBox is a subtype of CoHolder and in particular CoBox[String] is a subtype of CoHolder[AnyRef].
-In the contravariant first parameter pf MyFunction1 the subtype order is reversed.
+In the contravariant first parameter of MyFunction1 the subtype order is reversed.
+
