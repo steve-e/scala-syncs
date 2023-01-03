@@ -19,6 +19,7 @@ sbt docs/mdoc
 - [Polymorphism](docs/polymorphism.md)
 - More on [Companion Objects](docs/companion-objects.md)
 - [Map and foreach](docs/map-and-foreach.md)
+- [Type Variance](docs/variance.md)
 
 ### Absolute basics on of Category theory
 - [What is a category](docs/category.md)

@@ -157,6 +157,7 @@ First we will create a trait.
 ```scala
 trait Printer[T] {
     def print(t:T):String
+    override def toString:String = "Printer"
 }
 ```
 We can define a  method to use it.
@@ -172,7 +173,7 @@ case class Foo(value:String)
 implicit val fooPrinter = new Printer[Foo] {
     def print(f:Foo) = f.value.toUpperCase
 }
-// fooPrinter: AnyRef with Printer[Foo] = repl.MdocSession$MdocApp$$anon$1@61147891
+// fooPrinter: AnyRef with Printer[Foo] = Printer
 
 val foo1 = Foo("keep the noise down")
 // foo1: Foo = Foo("keep the noise down")

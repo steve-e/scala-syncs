@@ -80,8 +80,8 @@ A very simple for comprehension that does not yield a result can be de-sugared t
 This:
 ```scala
 for {
-    i <- nums
-}  println(i)
+  i <- nums
+} println(i)
 // 1
 // 2
 // 3

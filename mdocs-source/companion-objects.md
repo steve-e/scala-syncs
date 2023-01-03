@@ -139,6 +139,7 @@ First we will create a trait.
 ```scala mdoc
 trait Printer[T] {
     def print(t:T):String
+    override def toString:String = "Printer"
 }
 ```
 We can define a  method to use it.
