@@ -18,6 +18,7 @@ sbt docs/mdoc
 - [Implicits](docs/implicits.md) 
 - [Polymorphism](docs/polymorphism.md)
 - More on [Companion Objects](docs/companion-objects.md)
+- [Map and foreach](docs/map-and-foreach.md)
 
 ### Absolute basics on of Category theory
 - [What is a category](docs/category.md)
