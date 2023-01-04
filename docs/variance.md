@@ -229,12 +229,12 @@ object Customer {
 
 object Pizzaria {
     def sellPizza(card:Card):Margerita.type = {
-        println("charging $card")
+        println(s"charging $card")
         Margerita
     }
 }
 
 Customer.buyPizza(Pizzaria.sellPizza)
-// charging $card
+// charging Visa(gbp,1234 4321 3232 4411)
 // eating Margerita
 ```
