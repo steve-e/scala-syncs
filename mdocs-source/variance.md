@@ -170,6 +170,7 @@ trait Card extends Payment {
 }
 
 case class Visa(currency:String, number:String) extends Card   
+case class MasterCard(currency:String, number:String) extends Card   
 ```
 
 Pizzas
