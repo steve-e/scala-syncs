@@ -213,9 +213,11 @@ case object QuattroFormaggi extends CheesePizza {
 }
 ```
 Customer:
+
 I will give you a Visa payment, if you will give me a cheese pizza
 
-Pizzeria
+Pizzeria:
+
 I will accept a card payment and give you a margherita
 
 ![](../docs/buypizza.png)
