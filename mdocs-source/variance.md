@@ -179,7 +179,7 @@ trait Pizza
 trait CheesePizza {
     def cheeses:List[String]
 }
-case object Margerita extends CheesePizza {
+case object Margherita extends CheesePizza {
     val cheeses = List("mozerella","parmesan")
 }
 case object QuattroFormaggi extends CheesePizza {
@@ -190,8 +190,8 @@ case object QuattroFormaggi extends CheesePizza {
 Customer:
 I will give you a Visa payment, if you will give me a cheese pizza
 
-Pizzaria
-I will accept a card payment and give you a margerita
+Pizzeria
+I will accept a card payment and give you a margherita
 
 ```scala mdoc
 
@@ -209,9 +209,9 @@ object Customer {
 }
 
 object Pizzaria {
-    def sellMargeritaPizza(card:Card):Margerita.type = {
+    def sellMargheritaPizza(card:Card):Margherita.type = {
         println(s"charging $card")
-        Margerita
+        Margherita
     }   
     
     def sellQuattroFormaggiPizza(card:Card):QuattroFormaggi.type = {
@@ -220,7 +220,7 @@ object Pizzaria {
     }
 }
 
-Customer.buyPizzaWithVisa(Pizzaria.sellMargeritaPizza)
+Customer.buyPizzaWithVisa(Pizzaria.sellMargheritaPizza)
 Customer.buyPizzaWithVisa(Pizzaria.sellQuattroFormaggiPizza)
 Customer.buyPizzaWithMasterCard(Pizzaria.sellQuattroFormaggiPizza)
 ```
