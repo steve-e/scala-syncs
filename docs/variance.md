@@ -181,3 +181,59 @@ MyFunction1[CoHolder[Boolean],CoBox[String]]
 because CoBox is a subtype of CoHolder and in particular CoBox[String] is a subtype of CoHolder[AnyRef].
 In the contravariant first parameter of MyFunction1 the subtype order is reversed.
 
+
+Let's look at another example. Buying pizza
+
+Payment methods
+```scala
+trait Payment {
+def currency:String
+}
+trait Cash extends Payment
+
+trait Card extends Payment {
+    def number:String 
+}
+
+case class Visa(currency:String, number:String) extends Card
+```
+
+Pizzas
+```scala
+trait Pizza
+trait CheesePizza {
+    def cheeses:List[String]
+}
+case object Margerita extends CheesePizza {
+    val cheeses = List("mozerella","parmesan")
+}
+case object QuattroFormaggi extends CheesePizza {
+    val cheeses = List("mozerella","parmesan","gorgonzola","taleggio")
+}
+```
+Customer:
+I will give you a Visa payment, if you will give me a cheese pizza
+
+Pizzaria
+I will accept a card payment and give you a margerita
+
+```scala
+object Customer {
+ 
+    def buyPizza(buy:Visa => CheesePizza):Unit = {
+        val pizza:CheesePizza = buy(Visa("gbp","1234 4321 3232 4411"))
+        println(s"eating $pizza")
+    }
+}
+
+object Pizzaria {
+    def sellPizza(card:Card):Margerita.type = {
+        println("charging $card")
+        Margerita
+    }
+}
+
+Customer.buyPizza(Pizzaria.sellPizza)
+// charging $card
+// eating Margerita
+```
