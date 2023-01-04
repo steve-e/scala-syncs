@@ -221,20 +221,36 @@ I will accept a card payment and give you a margerita
 ```scala
 object Customer {
  
-    def buyPizza(buy:Visa => CheesePizza):Unit = {
+    def buyPizzaWithVisa(buy:Visa => CheesePizza):Unit = {
         val pizza:CheesePizza = buy(Visa("gbp","1234 4321 3232 4411"))
-        println(s"eating $pizza")
+        println(s"eating pizza with ${pizza.cheeses}")
+    }
+    
+    def buyPizzaWithMasterCard(buy:MasterCard => CheesePizza):Unit = {
+        val pizza:CheesePizza = buy(MasterCard("gbp","1234 4321 3232 4411"))
+        println(s"eating pizza with ${pizza.cheeses}")
     }
 }
 
 object Pizzaria {
-    def sellPizza(card:Card):Margerita.type = {
+    def sellMargeritaPizza(card:Card):Margerita.type = {
         println(s"charging $card")
         Margerita
+    }   
+    
+    def sellQuattroFormaggiPizza(card:Card):QuattroFormaggi.type = {
+        println(s"charging $card")
+        QuattroFormaggi
     }
 }
 
-Customer.buyPizza(Pizzaria.sellPizza)
+Customer.buyPizzaWithVisa(Pizzaria.sellMargeritaPizza)
 // charging Visa(gbp,1234 4321 3232 4411)
-// eating Margerita
+// eating pizza with List(mozerella, parmesan)
+Customer.buyPizzaWithVisa(Pizzaria.sellQuattroFormaggiPizza)
+// charging Visa(gbp,1234 4321 3232 4411)
+// eating pizza with List(mozerella, parmesan, gorgonzola, taleggio)
+Customer.buyPizzaWithMasterCard(Pizzaria.sellQuattroFormaggiPizza)
+// charging MasterCard(gbp,1234 4321 3232 4411)
+// eating pizza with List(mozerella, parmesan, gorgonzola, taleggio)
 ```

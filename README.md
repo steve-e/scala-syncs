@@ -25,6 +25,8 @@ sbt docs/mdoc
 - [What is a category](docs/category.md)
 - [Functor](docs/functor.md)
 
+## scala
+- [Functional Programming in Scala](https://people.cs.ksu.edu/~schmidt/705a/Scala/Programming-in-Scala.pdf) 
 ## Functional programming and Cats resources
 
 - Cats [documentation](https://typelevel.org/cats/)
