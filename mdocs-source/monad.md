@@ -69,7 +69,9 @@ There is a function `flatten` which takes a doubled context and makes it
 into a single context, eg takes `List(List(1, 2), List(7, 8, 9))`
 and flattens it to `List(1, 2, 7, 8, 9)`
 
-As demonstrated above, flatMap is equivalent to calling `flatten` after `map`,
+*Note that in cats there is a FlatMap type class that only has `flatMap` and not `pure`.*
+
+As demonstrated above, `flatMap` is equivalent to calling `flatten` after `map`,
 so monads also have a `flatMap`.
 
 Actually, `flatten` can be defined in terms of `flatMap`, by passing in identity.
