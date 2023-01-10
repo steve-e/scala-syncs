@@ -49,7 +49,7 @@ If all we have is a functor, that is, only a `map` method then we are stuck.
 List has some additional methods beyond just `map`.
 There are two things we could do.
 
-Call flatten on the result
+Call `flatten` on the result
 ```scala mdoc
 list.map(vowels).flatten
 ```
