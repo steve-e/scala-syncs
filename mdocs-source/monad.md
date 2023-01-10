@@ -79,7 +79,7 @@ List(List(1, 2, 3), List(4, 5)).flatten
 List(List(true, true, true), List(false, false)).flatMap(l => l)
 ```
 
-Functors and Monads can be used to model different ideas including
+Monads can be used to model different concepts including
 - containers, such as `List` or `Option`
 - effects such as computations that may error with `Either`, or computations that are asynchronous with `IO`
 - contexts such as being able to read from a config or write to a log
@@ -87,6 +87,8 @@ Functors and Monads can be used to model different ideas including
 These might seem quite varied things, but we could consider them all 
 as contexts, eg a `List` is a context of multiplicity, 
 an `Either` is a context for possible failure.
+
+They could also all be considered as effects, eg the effect of multiplicity, or the effect of reading from a config.
 
 ## Monads and for comprehensions
 
@@ -108,6 +110,5 @@ words
     word
       .map(character => character.isUpper)
   )
-
 
 ```
