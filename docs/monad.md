@@ -13,7 +13,7 @@ trait Functor[F[_]] {
 but we can consider types such as `List` and `Option` to be functors
 directly
 
-The map method allows us to transform the type in the functor context,
+The `map` method allows us to transform the type in the functor context,
 passing a simple function to `map`
 ```scala
 val list = List("red", "green", "orange")
@@ -48,7 +48,7 @@ now we have a list of lists, which may not be what we wanted.
 If we want to know the vowels in our list of words, 
 then calling map is a little awkward.
 
-If all we have is a functor, that is, only a `map` method then we are stuck.
+If all we have is a functor, that is only a `map` method, then we are stuck.
 
 
 List has some additional methods beyond just `map`.
@@ -70,16 +70,16 @@ list.flatMap(vowels)
 Monads can be considered to be an extension of Functor.
 
 A monad is a functor with two extra capabilities.
-There is a function that put any type into the context,
+There is a function that puts any type into the context,
 called `pure` (or it may be called `unit`).
 There is a function `flatten` which takes a doubled context and makes it
 into a single context, eg takes `List(List(1, 2), List(7, 8, 9))`
 and flattens it to `List(1, 2, 7, 8, 9)`
 
-*Note that in cats there is a FlatMap type class that only has `flatMap` and not `pure`.*
-
 As demonstrated above, `flatMap` is equivalent to calling `flatten` after `map`,
 so monads also have a `flatMap`.
+
+*Note that in cats there is a FlatMap type class that only has `flatMap` and not `pure`.*
 
 Actually, `flatten` can be defined in terms of `flatMap`, by passing in identity.
 

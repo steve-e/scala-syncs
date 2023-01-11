@@ -276,11 +276,11 @@ Here is an example
 ```scala
 trait Person
 class Parent(parentName: String) extends Person {
-    override def toString:String = parentName
+    override def toString:String = s"Parent($parentName)"
 }
 
-case class Child(name:String) extends Parent(name) {
-    override def toString:String = name
+case class Child(name:String) extends Parent(name){
+  override def toString:String = s"Child($name)"
 }
 
 def parentsNewChild(x:Parent, y:Parent):Child = {
@@ -291,7 +291,7 @@ def aliceAndBobsPerson(f:(Child,Child) => Person):Person =
     f(Child("Alice"), Child("Bob"))
 
 val person = aliceAndBobsPerson(parentsNewChild)
-// person: Person = Child("Mariam Alice Bob")
+// person: Person = Child("Mariam Child(Alice) Child(Bob)")
 ```
 ### Multiple variance with non-function types
 
@@ -299,13 +299,25 @@ This doesn't just work with functions.
 
 Given this definition
 ```scala
-class X1[-A,+B,-C]
+class X1[-A,+B,-C](a:A, b:B, c:C){
+
+    override def toString:String = s"X1($a,$b,$c)"
+    
+    def put(a:A, c:C):B = b
+}
 ```
 A Parent can be used in place of a Child in any contravariant position.
 
 ```scala
-val xyz:X1[Child, Parent, Child] = new X1[Parent,Child,Parent]
-// xyz: X1[Child, Parent, Child] = repl.MdocSession$MdocApp$X1@118828fc
+val a = new Parent("a")
+// a: Parent = Parent(a)
+val b = Child("b")
+// b: Child = Child("b")
+val c = new Parent("c")
+// c: Parent = Parent(c)
+
+val xyz:X1[Child, Parent, Child] = new X1[Parent,Child,Parent](a, b, c)
+// xyz: X1[Child, Parent, Child] = X1(Parent(a),Child(b),Parent(c))
 ```
 The above shows that `X1[Parent,Child,Parent]` is a subtype of `X1[Child, Parent, Child] `
 
@@ -315,16 +327,19 @@ In this example `X1[Parent,Child,Parent]` appears in the contravarient position.
 So any supertype of this can be in this position when the function is called.
 ```scala
 def xPrinter(f:X1[Parent,Child,Parent] => String):String =
-    f(new X1[Parent,Child,Parent])
+    f(new X1[Parent,Child,Parent](a, b, c))
 ```
 
 ```scala
-def printX(x:X1[Child, Parent, Child]):String = "I printed an X"
+def printX(x:X1[Child, Parent, Child]):String = {
+    val child = Child("")
+    x.put(child, child).toString
+}
     
 xPrinter(printX)    
-// res8: String = "I printed an X"
+// res8: String = "Child(b)"
 ```
 Now in the contravarient position of xPrinter, we have X1
-and X1 has Parent in its own contravarint position.
+and X1 has `Parent` in its own contravarint position.
 We have reversed the inheritance arrows twice, and so we can 
-pass in a Child where a Parent is requested
+pass in a `Child` type where a `Parent` is requested
