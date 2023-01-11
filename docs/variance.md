@@ -258,3 +258,73 @@ Customer.buyPizzaWithMasterCard(Pizzaria.sellQuattroFormaggiPizza)
 // charging MasterCard(gbp,1234 4321 3232 4411)
 // eating pizza with List(mozerella, parmesan, gorgonzola, taleggio)
 ```
+
+## Variance with multiple type parameters
+
+The examples using `T => R` or `Function1[-T,+R]` can be extended to types with more parameters. 
+
+There are other function types from `Function2` to `Function22`, eg
+
+```scala
+trait Function2[-T1, -T2, +R]
+```
+
+this is normally used with function syntax `(T1, T2) => R`
+
+Here is an example
+
+```scala
+trait Person
+class Parent(parentName: String) extends Person {
+    override def toString:String = parentName
+}
+
+case class Child(name:String) extends Parent(name) {
+    override def toString:String = name
+}
+
+def parentsNewChild(x:Parent, y:Parent):Child = {
+    Child(s"Mariam $x $y")
+}
+
+def aliceAndBobsPerson(f:(Child,Child) => Person):Person = 
+    f(Child("Alice"), Child("Bob"))
+
+val person = aliceAndBobsPerson(parentsNewChild)
+// person: Person = Child("Mariam Alice Bob")
+```
+### Multiple variance with non-function types
+
+This doesn't just work with functions.
+
+Given this definition
+```scala
+class X1[-A,+B,-C]
+```
+A Parent can be used in place of a Child in any contravariant position.
+
+```scala
+val xyz:X1[Child, Person, Child] = new X1[Person,Child,Person]
+// xyz: X1[Child, Person, Child] = repl.MdocSession$MdocApp$X1@1b41c781
+```
+The above shows that `X1[Person,Child,Person]` is a subtype of `X1[Child, Person, Child] `
+
+
+We can use this fact when defining functions.
+In this example `X1[Person,Child,Person]` appears in the contravarient position.
+So any supertype of this can be in this position when the function is called.
+```scala
+def xPrinter(f:X1[Person,Child,Person] => String):String =
+    f(new X1[Person,Child,Person])
+```
+
+```scala
+def printX(x:X1[Child, Person, Child]):String = "I printed an X"
+    
+xPrinter(printX)    
+// res8: String = "I printed an X"
+```
+Now in the contravarient position of xPrinter, we have X1
+and X1 has Parent in its own contravarint position.
+We have reversed the inheritance arrows twice, and so we can 
+pass in a Child where a Parent is requested
