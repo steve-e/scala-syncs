@@ -277,24 +277,24 @@ A Parent can be used in place of a Child in any contravariant position.
 
 ```scala mdoc
 
-val xyz:X1[Child, Person, Child] = new X1[Person,Child,Person]
+val xyz:X1[Child, Parent, Child] = new X1[Parent,Child,Parent]
 
 ```
-The above shows that `X1[Person,Child,Person]` is a subtype of `X1[Child, Person, Child] `
+The above shows that `X1[Parent,Child,Parent]` is a subtype of `X1[Child, Parent, Child] `
 
 
 We can use this fact when defining functions.
-In this example `X1[Person,Child,Person]` appears in the contravarient position.
+In this example `X1[Parent,Child,Parent]` appears in the contravarient position.
 So any supertype of this can be in this position when the function is called.
 ```scala mdoc
 
-def xPrinter(f:X1[Person,Child,Person] => String):String =
-    f(new X1[Person,Child,Person])
+def xPrinter(f:X1[Parent,Child,Parent] => String):String =
+    f(new X1[Parent,Child,Parent])
 ```
 
 ```scala mdoc
 
-def printX(x:X1[Child, Person, Child]):String = "I printed an X"
+def printX(x:X1[Child, Parent, Child]):String = "I printed an X"
     
 xPrinter(printX)    
 
