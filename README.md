@@ -21,6 +21,7 @@ sbt docs/mdoc
 - [Map and foreach](docs/map-and-foreach.md)
 - [Type Variance](docs/variance.md)
 - [Monad](docs/monad.md)
+- [More Monads](docs/more-monads.md)
 
 ### Absolute basics on of Category theory
 - [What is a category](docs/category.md)
