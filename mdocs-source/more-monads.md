@@ -25,8 +25,8 @@ def program[F[_]:Monad](api:Api[F])(key:String):F[String] = {
 }
 ```
 
-This program receives a key as a String, get an F or Int and uses the 
-Int to call repeat. It returns the result.
+This program receives a key as a String, gets an F of Int and uses the 
+Int to call repeat. It returns the result as an F of String.
 
 We can implement the Api for various monads.
 
@@ -254,4 +254,48 @@ The `attempt` function causes the IO executed with errors accumulated in an Eith
 program(ApiIO)("a").unsafeRunSync()
 program(ApiIO)("b").attempt.unsafeRunSync()
 program(ApiIO)("c").attempt.unsafeRunSync()
+```
+## Using IO directly
+
+We could also use IO directly instead of wrapping ApiFuture.
+We use `IO.delay` to suspend a computation, similar to `Eval.defer`. Or just use `IO.apply` or call directly like a constructor `IO(...)`.
+We use `IO.pure` for an immediate value, similar to `Eval.now`
+
+```scala mdoc
+object ApiIODirect extends Api[IO] {
+    private val store:Map[String,Int] = Map("a" -> 2, "b" -> 0)
+    def get(key:String):IO[Int] = IO{
+        println(s"getting $key")
+        Thread.sleep(1000)        
+        store(key)
+    }
+    def repeat(n:Int):IO[String] = 
+        if(n > 0) IO.pure("repeat" * n) 
+        else IO.delay[String](throw new Exception("Can't repeat negatively")) 
+}
+```
+We can use this with our program
+```scala mdoc
+
+program(ApiIODirect)("a")
+program(ApiIODirect)("b")
+program(ApiIODirect)("c")
+```
+and evaluate as before
+
+```scala mdoc
+program(ApiIODirect)("a").unsafeRunSync()
+program(ApiIODirect)("b").attempt.unsafeRunSync()
+program(ApiIODirect)("c").attempt.unsafeRunSync()
+```
+
+
+Note that the following four expressions are all identical
+```scala mdoc
+IO(println("suspended"))
+IO{
+    println("suspended")
+}
+IO.apply(println("suspended"))
+IO.delay(println("suspended"))
 ```

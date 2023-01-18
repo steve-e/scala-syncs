@@ -24,8 +24,8 @@ def program[F[_]:Monad](api:Api[F])(key:String):F[String] = {
 }
 ```
 
-This program receives a key as a String, get an F or Int and uses the 
-Int to call repeat. It returns the result.
+This program receives a key as a String, gets an F of Int and uses the 
+Int to call repeat. It returns the result as an F of String.
 
 We can implement the Api for various monads.
 
@@ -124,7 +124,7 @@ program(ApiFuture)("a")
 program(ApiFuture)("b")
 // res10: Future[String] = Future(Failure(java.lang.Exception: Can't repeat negatively))
 program(ApiFuture)("c")
-// getting b
+// 
 // getting c
 // res11: Future[String] = Future(Failure(java.util.NoSuchElementException: key not found: c))
 ```
@@ -236,11 +236,11 @@ object ApiEval extends Api[Eval] {
 We can use this with our program
 ```scala
 program(ApiEval)("a")
-// res13: Eval[String] = cats.Eval$$anon$4@7ba4c1fa
+// res13: Eval[String] = cats.Eval$$anon$4@61aef85d
 program(ApiEval)("b")
-// res14: Eval[String] = cats.Eval$$anon$4@368b1272
+// res14: Eval[String] = cats.Eval$$anon$4@740dca94
 program(ApiEval)("c")
-// res15: Eval[String] = cats.Eval$$anon$4@4c3f8385
+// res15: Eval[String] = cats.Eval$$anon$4@72a86e20
 ```
 Nothing is evaluated here. 
 The program creates an Eval that we still need to evaluate.
@@ -288,7 +288,7 @@ By wrapping ApiFuture with IO we can make it a little better behaved
 import cats.effect._
 
 implicit val contextShift: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
-// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@2aa3a859
+// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@34ff119a
   
 object ApiIO extends Api[IO] {
     def get(key:String):IO[Int] = IO.fromFuture(IO(ApiFuture.get(key)))
@@ -301,23 +301,23 @@ We can use this with our program
 ```scala
 program(ApiIO)("a")
 // res17: IO[String] = Bind(
-//   Async(
-//     cats.effect.internals.IOBracket$$$Lambda$6080/1723106865@1ab02523,
-//     false
-//   ),
+//   Async(cats.effect.internals.IOBracket$$$Lambda$6059/1766981982@597b04b, false),
 //   <function1>
 // )
 program(ApiIO)("b")
 // res18: IO[String] = Bind(
 //   Async(
-//     cats.effect.internals.IOBracket$$$Lambda$6080/1723106865@5eb4ff57,
+//     cats.effect.internals.IOBracket$$$Lambda$6059/1766981982@34608467,
 //     false
 //   ),
 //   <function1>
 // )
 program(ApiIO)("c")
 // res19: IO[String] = Bind(
-//   Async(cats.effect.internals.IOBracket$$$Lambda$6080/1723106865@aa69b42, false),
+//   Async(
+//     cats.effect.internals.IOBracket$$$Lambda$6059/1766981982@585fb4ed,
+//     false
+//   ),
 //   <function1>
 // )
 ```
@@ -347,4 +347,64 @@ program(ApiIO)("c").attempt.unsafeRunSync()
 // res22: Either[Throwable, String] = Left(
 //   java.util.NoSuchElementException: key not found: c
 // )
+```
+## Using IO directly
+
+We could also use IO directly instead of wrapping APIFuture.
+We use `IO.delay` to suspend a computation, similar to `Eval.defer`. Or just use `IO.apply` or call directly like a constructor `IO(...)`.
+We use `IO.pure` for an immediate value, similar to `Eval.now`
+
+```scala
+object ApiIODirect extends Api[IO] {
+    private val store:Map[String,Int] = Map("a" -> 2, "b" -> 0)
+    def get(key:String):IO[Int] = IO{
+        println(s"getting $key")
+        Thread.sleep(1000)        
+        store(key)
+    }
+    def repeat(n:Int):IO[String] = 
+        if(n > 0) IO.pure("repeat" * n) 
+        else IO.delay[String](throw new Exception("Can't repeat negatively")) 
+}
+```
+We can use this with our program
+```scala
+program(ApiIODirect)("a")
+// res23: IO[String] = Bind(Delay(<function0>), <function1>)
+program(ApiIODirect)("b")
+// res24: IO[String] = Bind(Delay(<function0>), <function1>)
+program(ApiIODirect)("c")
+// res25: IO[String] = Bind(Delay(<function0>), <function1>)
+```
+and evaluate as before
+
+```scala
+program(ApiIODirect)("a").unsafeRunSync()
+// getting a
+// res26: String = "repeatrepeat"
+program(ApiIODirect)("b").attempt.unsafeRunSync()
+// getting b
+// res27: Either[Throwable, String] = Left(
+//   java.lang.Exception: Can't repeat negatively
+// )
+program(ApiIODirect)("c").attempt.unsafeRunSync()
+// getting c
+// res28: Either[Throwable, String] = Left(
+//   java.util.NoSuchElementException: key not found: c
+// )
+```
+
+
+Note that the following four expressions are all identical
+```scala
+IO(println("suspended"))
+// res29: IO[Unit] = Delay(<function0>)
+IO{
+    println("suspended")
+}
+// res30: IO[Unit] = Delay(<function0>)
+IO.apply(println("suspended"))
+// res31: IO[Unit] = Delay(<function0>)
+IO.delay(println("suspended"))
+// res32: IO[Unit] = Delay(<function0>)
 ```
