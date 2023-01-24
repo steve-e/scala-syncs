@@ -1,5 +1,8 @@
 # Scala concurrency introduction
 
+This document gives a quick tour of some concurrency and parallelization options in scala.
+
+
 ## Concurrency landscape in scala
 
 ### JVM
@@ -12,13 +15,13 @@ The concurrency model is quite different. We will not discuss this further.
 Java provides various inbuilt low level concurrency control methods.
 These are made available in scala.
 These are:
-- call `wait` on any AnyRef. This causes the thread to block
+- call `wait` on any AnyRef (or Object in java). This causes the thread to block
 - call `notify` on any AnyRef, this causes any threads waiting on the AnyRef to become runnable
-- call `synchronized` on any object passing in a code block to be run exclusively
+- call `synchronized` on any AnyRef passing in a code block to be run exclusively
 - call `synchronized` global function to synchronize on the enclosing instance
 - `@volatile` annotation
 
-Here is a small example showing use of wait and notify. 
+Here is a small example showing use of `wait` and `notify`. 
 These methods must be called in a synchronized block.
 
 ```scala
@@ -36,14 +39,15 @@ val future = Future {
   } 
   
 }
+// Waiting on LockC
 // future: Future[Unit] = Future(Success(()))
  println("Notifying LockC")
-// Waiting on LockC
 // Notifying LockC
 LockC.synchronized {
   LockC.notify()
 }
 Await.ready(future, 2.second)
+// Finished waiting on LockC
 // res2: Future[Unit] = Future(Success(()))
 ```
 The output does not appear in declaration order. 
@@ -56,12 +60,17 @@ This is because the `wait` method blocks until `notify` is called on the object.
 The `@volatile` annotation ensures that a thread gets the latest copy
 of a variable, even if it is updated in a different thread.
 This annotation is needed because the JVM memory model does not guarantee that
-a thread will always read the latest updated
+a thread will always read the latest updated value.
 
 ```scala
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent._
+import scala.concurrent.duration.DurationInt
 
 var a = "init a"
+// a: String = "init a"
 @volatile var b = "init b"
+// b: String = "init b"
 
 object LockV
 val f1 = Future {
@@ -69,16 +78,22 @@ val f1 = Future {
   a = a + " updated in f1"
   b = b + " updated in f1"
 }
+// f1: Future[Unit] = Future(Success(()))
 val f2 = Future {
   LockV.synchronized(LockV.wait())  
   a = a + " updated in f2"
   b = b + " updated in f2"
 }
+// f2: Future[Unit] = Future(Success(()))
 LockV.synchronized(LockV.notifyAll())
 Await.ready(f1, 3.second)
+// res5: Future[Unit] = Future(Success(()))
 Await.ready(f2, 4.second)
+// res6: Future[Unit] = Future(Success(()))
 println(a)
+// init a updated in f1
 println(b)
+// init b updated in f2 updated in f1
 ```
 This program is non-deterministic, but it has several times printed
 1. init a updated in f2
@@ -95,22 +110,68 @@ Probably the best way to understand them is to read java resources.
 
 The java pacakge `java.util.concurrent` has a number of useful classes.
 These were added in the early 2000s and are more useful than the low level utils.
+
 All of these are directly usable in scala. 
 Some are also thinly wrapped by the scala standard library.
 Others are wrapped by features of cats effect.
 
+There are some thread safe mutable collections such as ConcurrentHashMap.
+
+There are also thread safe mutable variables such as AtomicInteger
+
+Here is a simple example using a countdown latch.
+This class allows you to await a fixed number of notifications.
+```scala
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent._
+import scala.concurrent.duration.DurationInt
+import java.util.concurrent.CountDownLatch
+
+val latch = new CountDownLatch(2)
+// latch: CountDownLatch = java.util.concurrent.CountDownLatch@72f1b62[Count = 0]
+
+val future = Future {
+ println("Waiting on latch")
+ latch.await()  
+ println("Got latch")
+}
+// future: Future[Unit] = Future(Success(()))
+
+Thread.sleep(100)
+// Waiting on latch
+
+println("Counting down once")
+// Counting down once
+latch.countDown()
+
+println("Counting down a second time")
+// Counting down a second time
+latch.countDown()
+
+Thread.sleep(100)
+// Got latch
+
+Await.ready(future, 2.second)
+// res16: Future[Unit] = Future(Success(()))
+```
+
+There are many other lock classes, such as Semaphore and CyclicBarrier.
 
 ### Scala Future and Promise
 
-We have seen that Future can be used to run a block of code in a threadpool.
+We have seen that `Future` can be used to run a block of code in a thread pool.
 We have also seen that it forms a monad allowing us to map functions and sequence operations 
-in with flatMap or a for comprehension.
+with `flatMap` or a `for` comprehension.
 
 
 Promise is closely related to Future and allows communication across thread boundaries.
 
 Inter thread communication with Promise
 ```scala
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent._
+import scala.concurrent.duration.DurationInt
+
 val p = Promise[String]()
 // p: Promise[String] = Future(Success(Hello from main thread))
 val f = p.future
@@ -127,24 +188,37 @@ println("main completes future")
 // main completes future
 p.success("Hello from main thread")
 // await result
-// res4: Promise[String] = Future(Success(Hello from main thread))
+// res19: Promise[String] = Future(Success(Hello from main thread))
 println("main awaits future")
 // main awaits future
 Await.ready(fx, 2400.millis)
 // Got [Hello from main thread]
-// res6: Future[Unit] = Future(Success(()))
+// res21: Future[Unit] = Future(Success(()))
 ```
 
-Deadlock
+### Deadlock
+The following example shows an example of deadlock.
+Two threads are waiting on locks. 
+But each thread is awaiting the other thread to release a lock!
+Neither thread can progress, and the future times out.
+
+This example uses future, but similar programs can be written using Object locks or `java.util.concurrent` locks
 ```scala
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent._
+import scala.concurrent.duration.DurationInt
+
 object LockA
 object LockB
 
 val p2 = Promise[String]()
-val f2 = p.future
+// p2: Promise[String] = Future(Success(Hello from main thread))
+val f2 = p2.future
+// f2: Future[String] = Future(Success(Hello from main thread))
 
 
-Future {LockB.synchronized{
+Future {
+    LockB.synchronized{
     println("future synchronized on LockB")
     LockA.synchronized{
       println("future synchronized on LockA")
@@ -158,10 +232,13 @@ Future {LockB.synchronized{
       }
     }
     println("future  released LockA")
-
   }
-  println("future  released LockB")}
+  println("future  released LockB")
+}
+// res23: Future[Unit] = Future(Failure(java.util.concurrent.TimeoutException: Futures timed out after [5 seconds]))
+
 println("Future created")
+// Future created
 
 LockA.synchronized{
   println("main synchronized on LockA")
@@ -173,11 +250,15 @@ LockA.synchronized{
   print("main released LockB")
 
 }
+// future synchronized on LockB
+// future synchronized on LockA
+// failed [Futures timed out after [5 seconds]]
+// main synchronized on LockA
+// main synchronized on LockB
+// main released LockB
 println("main released LockA")
-
+// main released LockA
 ```
-
-
 
 ### Cats effect IO
 
@@ -185,12 +266,22 @@ Cats effect is a library of functional utilities for concurrency and parallelism
 As the name suggests it is built on top of the cats library.
 It uses many cats type classes such as Functor, Monad, Applicative, Monoid, etc 
 
-TODO
-IO
-IO Ref, MVar, Defer
-IO 3.* ?
+Cats effect provides its own type classes such as `Sync`, `Async` and `Timer`.
 
 
+
+### IO
+
+Cats effect provides its own core of implementation which is `IO`.
+
+This can be used as to define asynchronous tasks. 
+It can be used to wrap Futures. 
+By using `map`, `flatMap` etc, programs can be constructed.
+These are then evaluated eg by calling `unsafeRunSync`.
+This causes the program to be evaluated by an interpreter.
+The interpreter can efficiently run tasks without submitting each to a thread pool.
+
+We can explore IO more later on.
 ### Akka Actors
 
 Akka provides a message passing model of concurrency.
