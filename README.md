@@ -22,6 +22,7 @@ sbt docs/mdoc
 - [Type Variance](docs/variance.md)
 - [Monad](docs/monad.md)
 - [More Monads](docs/more-monads.md)
+- [Scala Concurrency Introduction](docs/scala-concurrency.md)
 
 ### Absolute basics on of Category theory
 - [What is a category](docs/category.md)
