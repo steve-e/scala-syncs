@@ -2,6 +2,12 @@
 
 This document gives a quick tour of some concurrency and parallelization options in scala.
 
+The code snippets demonstrate JVM and scala features. 
+They also demonstrate some basic features of concurrent programs.
+
+These examples do not represent best practice. 
+For example, it is not good practice to use Thread.sleep to encourage another thread to complete.
+
 
 ## Concurrency landscape in scala
 
@@ -221,6 +227,9 @@ LockA.synchronized{
 println("main released LockA")
 
 ```
+## Mentions of higher level facilities
+
+We won't have time to go through these in detail, but they deserve at least a mention.
 
 ### Cats effect IO
 
