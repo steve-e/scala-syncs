@@ -2,6 +2,12 @@
 
 This document gives a quick tour of some concurrency and parallelization options in scala.
 
+The code snippets demonstrate JVM and scala features. 
+They also demonstrate some basic features of concurrent programs.
+
+These examples do not represent best practice. 
+For example, it is not good practice to use Thread.sleep to encourage another thread to complete.
+
 
 ## Concurrency landscape in scala
 
@@ -13,13 +19,13 @@ There is also Scala.js that compiles down to javascript and runs on a javascript
 The concurrency model is quite different. We will not discuss this further.
 
 Java provides various inbuilt low level concurrency control methods.
-These are made available in scala.
+These are made available in scala. In general, do not use them.
 These are:
 - call `wait` on any AnyRef (or Object in java). This causes the thread to block
 - call `notify` on any AnyRef, this causes any threads waiting on the AnyRef to become runnable
 - call `synchronized` on any AnyRef passing in a code block to be run exclusively
 - call `synchronized` global function to synchronize on the enclosing instance
-- `@volatile` annotation
+- `@volatile` annotation (see below)
 
 Here is a small example showing use of `wait` and `notify`. 
 These methods must be called in a synchronized block.
@@ -93,7 +99,7 @@ Await.ready(f2, 4.second)
 println(a)
 // init a updated in f1
 println(b)
-// init b updated in f2 updated in f1
+// init b updated in f1
 ```
 This program is non-deterministic, but it has several times printed
 1. init a updated in f2
@@ -128,7 +134,7 @@ import scala.concurrent.duration.DurationInt
 import java.util.concurrent.CountDownLatch
 
 val latch = new CountDownLatch(2)
-// latch: CountDownLatch = java.util.concurrent.CountDownLatch@72f1b62[Count = 0]
+// latch: CountDownLatch = java.util.concurrent.CountDownLatch@40d5ba22[Count = 0]
 
 val future = Future {
  println("Waiting on latch")
@@ -259,6 +265,9 @@ LockA.synchronized{
 println("main released LockA")
 // main released LockA
 ```
+## Mentions of higher level facilities
+
+We won't have time to go through these in detail, but they deserve at least a mention.
 
 ### Cats effect IO
 
@@ -282,6 +291,7 @@ This causes the program to be evaluated by an interpreter.
 The interpreter can efficiently run tasks without submitting each to a thread pool.
 
 We can explore IO more later on.
+
 ### Akka Actors
 
 Akka provides a message passing model of concurrency.

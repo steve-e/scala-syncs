@@ -19,13 +19,13 @@ There is also Scala.js that compiles down to javascript and runs on a javascript
 The concurrency model is quite different. We will not discuss this further.
 
 Java provides various inbuilt low level concurrency control methods.
-These are made available in scala.
+These are made available in scala. In general, do not use them.
 These are:
 - call `wait` on any AnyRef (or Object in java). This causes the thread to block
 - call `notify` on any AnyRef, this causes any threads waiting on the AnyRef to become runnable
 - call `synchronized` on any AnyRef passing in a code block to be run exclusively
 - call `synchronized` global function to synchronize on the enclosing instance
-- `@volatile` annotation
+- `@volatile` annotation (see below)
 
 Here is a small example showing use of `wait` and `notify`. 
 These methods must be called in a synchronized block.
