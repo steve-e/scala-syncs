@@ -1,6 +1,6 @@
 package syncs.catsintro
 
-import cats.{Functor, Monad}
+import cats.{Functor, Monad, Monoid}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 

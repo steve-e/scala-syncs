@@ -30,7 +30,7 @@ These are:
 Here is a small example showing use of `wait` and `notify`. 
 These methods must be called in a synchronized block.
 
-```scala mdoc
+```scala
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.concurrent.duration.DurationInt

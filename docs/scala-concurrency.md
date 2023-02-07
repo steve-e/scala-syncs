@@ -45,16 +45,11 @@ val future = Future {
   } 
   
 }
-// future: Future[Unit] = Future(Success(()))
  println("Notifying LockC")
-// Notifying LockC
-// Waiting on LockC
 LockC.synchronized {
   LockC.notify()
 }
 Await.ready(future, 5.second)
-// Finished waiting on LockC
-// res2: Future[Unit] = Future(Success(()))
 ```
 The output does not appear in declaration order. 
 Instead, it prints
@@ -93,13 +88,13 @@ val f2 = Future {
 // f2: Future[Unit] = Future(Success(()))
 LockV.synchronized(LockV.notifyAll())
 Await.ready(f1, 3.second)
-// res5: Future[Unit] = Future(Success(()))
+// res2: Future[Unit] = Future(Success(()))
 Await.ready(f2, 4.second)
-// res6: Future[Unit] = Future(Success(()))
+// res3: Future[Unit] = Future(Success(()))
 println(a)
-// init a updated in f1
+// init a updated in f1 updated in f2
 println(b)
-// init b updated in f2 updated in f1
+// init b updated in f1 updated in f2
 ```
 This program is non-deterministic, but it has several times printed
 1. init a updated in f2
@@ -134,7 +129,7 @@ import scala.concurrent.duration.DurationInt
 import java.util.concurrent.CountDownLatch
 
 val latch = new CountDownLatch(2)
-// latch: CountDownLatch = java.util.concurrent.CountDownLatch@4c60a335[Count = 0]
+// latch: CountDownLatch = java.util.concurrent.CountDownLatch@621b4897[Count = 0]
 
 val future = Future {
  println("Waiting on latch")
@@ -158,7 +153,7 @@ Thread.sleep(100)
 // Got latch
 
 Await.ready(future, 2.second)
-// res16: Future[Unit] = Future(Success(()))
+// res13: Future[Unit] = Future(Success(()))
 ```
 
 There are many other lock classes, such as Semaphore and CyclicBarrier.
@@ -194,12 +189,12 @@ println("main completes future")
 // main completes future
 p.success("Hello from main thread")
 // await result
-// res19: Promise[String] = Future(Success(Hello from main thread))
+// res16: Promise[String] = Future(Success(Hello from main thread))
 println("main awaits future")
 // main awaits future
 Await.ready(fx, 2400.millis)
 // Got [Hello from main thread]
-// res21: Future[Unit] = Future(Success(()))
+// res18: Future[Unit] = Future(Success(()))
 ```
 
 ### Deadlock
@@ -241,7 +236,7 @@ Future {
   }
   println("future  released LockB")
 }
-// res23: Future[Unit] = Future(Success(()))
+// res20: Future[Unit] = Future(Failure(java.util.concurrent.TimeoutException: Futures timed out after [5 seconds]))
 
 println("Future created")
 // Future created
@@ -256,10 +251,12 @@ LockA.synchronized{
   print("main released LockB")
 
 }
+// future synchronized on LockB
+// future synchronized on LockA
+// failed [Futures timed out after [5 seconds]]
 // main synchronized on LockA
 // main synchronized on LockB
-// future synchronized on LockB
-// main released LockBfuture synchronized on LockA
+// main released LockB
 println("main released LockA")
 // main released LockA
 ```
