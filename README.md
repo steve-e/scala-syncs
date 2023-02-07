@@ -23,6 +23,7 @@ sbt docs/mdoc
 - [Monad](docs/monad.md)
 - [More Monads](docs/more-monads.md)
 - [Scala Concurrency Introduction](docs/scala-concurrency.md)
+- More on [Cats type classes in Cats Effect](docs/more-cats-effect.md)
 
 ### Absolute basics on of Category theory
 - [What is a category](docs/category.md)
