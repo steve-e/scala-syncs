@@ -3,7 +3,7 @@
 The cats effect library and particularly `IO`, have instances for many type classes.
 Some we haven't looked at yet.
 
-## Apply type class
+## Apply and Applicative type class
 
 `IO` is a monad and supports monad syntax.
 `>>` is a synonym for flatMap, ignoring its input.
@@ -61,20 +61,30 @@ val pr = left *> right
 pr.unsafeRunSync()
 ```
 
+The `Applicative` type class is an `Apply` with a `pure` method.
+We have seen that aspect already as `Monad` gets its `pure` by extending `Applicative`
+
 ## Traverse type class
 
 The `Traverse` type class provides `sequence` and `traverse` and other methods.
 
-One common use case is that a pure List of values needs to have an operation called on each element.
+One common use case is that a pure `List` of values needs to have an operation called on each element.
 
-We can map the operation on the list, and the use `sequence` to reverse the monad order
+We can `map` the operation on the `List`, and then use `sequence` to reverse the enclosing type order
 
 ```scala mdoc
-def process(input:String):IO[Unit] = IO{ println(s"Processing: [$input]")}
+def process(input:String):IO[Unit] = IO{ 
+        println(s"Processing: [$input]")
+    }
 
 val inputs:List[String] = List("Foo", "bar", "BAZ")
+
 val listOfIO:List[IO[Unit]] = inputs.map(process)
+
+// It is difficult to evaluate a List of IO, so lets flip the type order
+
 val ioOfList:IO[List[Unit]] = listOfIO.sequence  
+
 ioOfList.unsafeRunSync()
 
 ```
@@ -88,15 +98,16 @@ runner.unsafeRunSync()
 ```
 
 We could run the effects in parallel. 
-But we need to consider if the processor can handle very rapid requests.
+But we need to consider if the processor (eg a webservice or database) can handle very rapid requests.
 We also need to know that our effects do not need to happen in order.
+
 ```scala mdoc
 val parallel = inputs.parTraverse(process)
 parallel.unsafeRunSync()
 ```
 
 Both `traverse` and `sequence` appear in the standard library on `Future`. 
-The cats api version can work for any cats with a `Travere` instance.
+The cats api version can work for any cats with a `Traverse` instance.
 
 Each of the previous examples of processing a list ended with a `List[Unit]`
 indicating that each element was processed.
@@ -122,7 +133,7 @@ A monoid is an algebraic structure with an associative binary operation on a set
 In the cats library, the operation is called `combine`.
 The neutral or identity element is called `empty`
 
-The basic idea is easy to get with some examples.
+The basic idea is easy to understand with some examples.
 
 ### Additive monoid for Int
 ```scala mdoc
@@ -138,7 +149,7 @@ val addition = new Monoid[Int] {
 ints.combineAll(addition)
 ```
 
-Actually there is a cats `Monoid[Int]` available implicitly.
+Actually there is an additive `Monoid[Int]` available implicitly.
 You can use that if you want addition
 
 ```scala mdoc
@@ -164,7 +175,7 @@ val multiplication = new Monoid[Int] {
 ints.combineAll(multiplication)
 ```
 ### List monoid
-A Monoid is not just for numeric types but can be created for List, String, Unit, etc.
+A Monoid is not just for numeric types but can be created for IO, List, String, Unit, etc.
 ```scala mdoc
 val lists:List[List[Int]] = List(List(1,2,3),List(4,5),List(6,7))
 

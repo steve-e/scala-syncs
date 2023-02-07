@@ -3,7 +3,7 @@
 The cats effect library and particularly `IO`, have instances for many type classes.
 Some we haven't looked at yet.
 
-## Apply type class
+## Apply and Applicative type class
 
 `IO` is a monad and supports monad syntax.
 `>>` is a synonym for flatMap, ignoring its input.
@@ -17,25 +17,25 @@ import cats.implicits._
 import scala.concurrent.ExecutionContext
 
 implicit val contextShift: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
-// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@279564aa
+// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@47a8bb4a
 
 val io1 = IO{Thread.sleep(1000)} >> IO(println("slept"))
 // io1: IO[Unit] = Bind(
 //   Delay(<function0>),
-//   cats.syntax.FlatMapOps$$$Lambda$6018/1978314914@273f2619
+//   cats.syntax.FlatMapOps$$$Lambda$6038/1758591249@66348061
 // )
 val io2 = IO{Thread.sleep(1000)} >> IO(println("slept again"))
 // io2: IO[Unit] = Bind(
 //   Delay(<function0>),
-//   cats.syntax.FlatMapOps$$$Lambda$6018/1978314914@37b97375
+//   cats.syntax.FlatMapOps$$$Lambda$6038/1758591249@31af39ef
 // )
 val program = (io1 *> io2)
 // program: IO[Unit] = Bind(
 //   Bind(
 //     Delay(<function0>),
-//     cats.syntax.FlatMapOps$$$Lambda$6018/1978314914@273f2619
+//     cats.syntax.FlatMapOps$$$Lambda$6038/1758591249@66348061
 //   ),
-//   cats.FlatMap$$Lambda$6019/1469343500@7cbb7a15
+//   cats.FlatMap$$Lambda$6039/1639393946@4b5ec93e
 // )
 
 program.unsafeRunSync()
@@ -88,17 +88,17 @@ val printer:String => IO[Unit] = i => IO(println(s"Evaluating: $i"))
 val left = IO.pure("left").flatTap(printer)
 // left: IO[String] = Bind(
 //   Pure("left"),
-//   cats.FlatMap$$Lambda$6024/2020583198@691cf874
+//   cats.FlatMap$$Lambda$6044/1589061337@16874ab3
 // )
 val right = IO.pure("right").flatTap(printer)
 // right: IO[String] = Bind(
 //   Pure("right"),
-//   cats.FlatMap$$Lambda$6024/2020583198@1419c488
+//   cats.FlatMap$$Lambda$6044/1589061337@4da645b3
 // )
 val pr = left *> right
 // pr: IO[String] = Bind(
-//   Bind(Pure("left"), cats.FlatMap$$Lambda$6024/2020583198@691cf874),
-//   cats.FlatMap$$Lambda$6019/1469343500@384d0597
+//   Bind(Pure("left"), cats.FlatMap$$Lambda$6044/1589061337@16874ab3),
+//   cats.FlatMap$$Lambda$6039/1639393946@7923f5f1
 // )
 pr.unsafeRunSync()
 // Evaluating: left
@@ -106,30 +106,40 @@ pr.unsafeRunSync()
 // res10: String = "right"
 ```
 
+The `Applicative` type class is an `Apply` with a `pure` method.
+We have seen that aspect already as `Monad` gets its `pure` by extending `Applicative`
+
 ## Traverse type class
 
 The `Traverse` type class provides `sequence` and `traverse` and other methods.
 
-One common use case is that a pure List of values needs to have an operation called on each element.
+One common use case is that a pure `List` of values needs to have an operation called on each element.
 
-We can map the operation on the list, and the use `sequence` to reverse the monad order
+We can `map` the operation on the `List`, and then use `sequence` to reverse the enclosing type order
 
 ```scala
-def process(input:String):IO[Unit] = IO{ println(s"Processing: [$input]")}
+def process(input:String):IO[Unit] = IO{ 
+        println(s"Processing: [$input]")
+    }
 
 val inputs:List[String] = List("Foo", "bar", "BAZ")
 // inputs: List[String] = List("Foo", "bar", "BAZ")
+
 val listOfIO:List[IO[Unit]] = inputs.map(process)
 // listOfIO: List[IO[Unit]] = List(
 //   Delay(<function0>),
 //   Delay(<function0>),
 //   Delay(<function0>)
 // )
+
+// It is difficult to evaluate a List of IO, so lets flip the type order
+
 val ioOfList:IO[List[Unit]] = listOfIO.sequence  
 // ioOfList: IO[List[Unit]] = Bind(
 //   Delay(<function0>),
-//   cats.FlatMap$$Lambda$6036/1097348892@1f81bb59
+//   cats.FlatMap$$Lambda$6056/1321839864@4409d4d2
 // )  
+
 ioOfList.unsafeRunSync()
 // Processing: [Foo]
 // Processing: [bar]
@@ -144,7 +154,7 @@ This is more efficient as the list is traversed only once.
 val runner = inputs.traverse(process)
 // runner: IO[List[Unit]] = Bind(
 //   Delay(<function0>),
-//   cats.FlatMap$$Lambda$6036/1097348892@11502f85
+//   cats.FlatMap$$Lambda$6056/1321839864@6877dc32
 // )
 runner.unsafeRunSync()
 // Processing: [Foo]
@@ -154,20 +164,21 @@ runner.unsafeRunSync()
 ```
 
 We could run the effects in parallel. 
-But we need to consider if the processor can handle very rapid requests.
+But we need to consider if the processor (eg a webservice or database) can handle very rapid requests.
 We also need to know that our effects do not need to happen in order.
+
 ```scala
 val parallel = inputs.parTraverse(process)
 // parallel: IO[List[Unit]] = Async(<function2>, true)
 parallel.unsafeRunSync()
 // Processing: [BAZ]
-// Processing: [bar]
 // Processing: [Foo]
+// Processing: [bar]
 // res13: List[Unit] = List((), (), ())
 ```
 
 Both `traverse` and `sequence` appear in the standard library on `Future`. 
-The cats api version can work for any cats with a `Travere` instance.
+The cats api version can work for any cats with a `Traverse` instance.
 
 Each of the previous examples of processing a list ended with a `List[Unit]`
 indicating that each element was processed.
@@ -179,10 +190,10 @@ One way is to use `List.map`, then `List.fold`, with `>>` as the combiner functi
 val all = inputs.map(process).fold(IO.unit)(_ >> _)
 // all: IO[Unit] = Bind(
 //   Bind(
-//     Bind(Pure(()), cats.syntax.FlatMapOps$$$Lambda$6018/1978314914@4b3784a3),
-//     cats.syntax.FlatMapOps$$$Lambda$6018/1978314914@1b0641ef
+//     Bind(Pure(()), cats.syntax.FlatMapOps$$$Lambda$6038/1758591249@17839752),
+//     cats.syntax.FlatMapOps$$$Lambda$6038/1758591249@7169742e
 //   ),
-//   cats.syntax.FlatMapOps$$$Lambda$6018/1978314914@9cf7aa5
+//   cats.syntax.FlatMapOps$$$Lambda$6038/1758591249@7bcc8195
 // )
 all.unsafeRunSync()
 // Processing: [Foo]
@@ -195,8 +206,8 @@ This makes use of an implicitly available for `Monoid[IO]`
 ```scala
 val k = inputs.foldMapM(process)
 // k: IO[Unit] = Bind(
-//   Map(Delay(<function0>), scala.Function1$$Lambda$612/1935607701@19f3501e, 1),
-//   cats.StackSafeMonad$$Lambda$6058/1115695699@6e96dd1f
+//   Map(Delay(<function0>), scala.Function1$$Lambda$609/972992045@2d0c4492, 1),
+//   cats.StackSafeMonad$$Lambda$6078/1663319588@26be6f66
 // )
 k.unsafeRunSync()
 // Processing: [Foo]
@@ -210,7 +221,7 @@ A monoid is an algebraic structure with an associative binary operation on a set
 In the cats library, the operation is called `combine`.
 The neutral or identity element is called `empty`
 
-The basic idea is easy to get with some examples.
+The basic idea is easy to understand with some examples.
 
 ### Additive monoid for Int
 ```scala
@@ -223,13 +234,13 @@ val addition = new Monoid[Int] {
                    val empty = 0
                    def combine(a:Int, b:Int):Int = a + b 
                 }
-// addition: AnyRef with Monoid[Int]{val empty: Int} = repl.MdocSession$MdocApp$$anon$1@4736e01b
+// addition: AnyRef with Monoid[Int]{val empty: Int} = repl.MdocSession$MdocApp$$anon$1@1ccca79b
 
 ints.combineAll(addition)
 // res16: Int = 15
 ```
 
-Actually there is a cats `Monoid[Int]` available implicitly.
+Actually there is an additive `Monoid[Int]` available implicitly.
 You can use that if you want addition
 
 ```scala
@@ -251,13 +262,13 @@ val multiplication = new Monoid[Int] {
                    val empty = 1
                    def combine(a:Int, b:Int):Int = a * b 
                 }
-// multiplication: AnyRef with Monoid[Int]{val empty: Int} = repl.MdocSession$MdocApp$$anon$2@355eb00a
+// multiplication: AnyRef with Monoid[Int]{val empty: Int} = repl.MdocSession$MdocApp$$anon$2@3935dbe
 
 ints.combineAll(multiplication)
 // res18: Int = 120
 ```
 ### List monoid
-A Monoid is not just for numeric types but can be created for List, String, Unit, etc.
+A Monoid is not just for numeric types but can be created for IO, List, String, Unit, etc.
 ```scala
 val lists:List[List[Int]] = List(List(1,2,3),List(4,5),List(6,7))
 // lists: List[List[Int]] = List(List(1, 2, 3), List(4, 5), List(6, 7))
