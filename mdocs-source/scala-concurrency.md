@@ -49,7 +49,7 @@ val future = Future {
 LockC.synchronized {
   LockC.notify()
 }
-Await.ready(future, 2.second)
+Await.ready(future, 5.second)
 ```
 The output does not appear in declaration order. 
 Instead, it prints

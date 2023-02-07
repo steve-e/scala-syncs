@@ -124,8 +124,7 @@ program(ApiFuture)("a")
 program(ApiFuture)("b")
 // res10: Future[String] = Future(Failure(java.lang.Exception: Can't repeat negatively))
 program(ApiFuture)("c")
-// 
-// getting c
+// getting b
 // res11: Future[String] = Future(Failure(java.util.NoSuchElementException: key not found: c))
 ```
 but calling toString on the Future does not await or complete it.
@@ -236,11 +235,11 @@ object ApiEval extends Api[Eval] {
 We can use this with our program
 ```scala
 program(ApiEval)("a")
-// res13: Eval[String] = cats.Eval$$anon$4@61aef85d
+// res13: Eval[String] = cats.Eval$$anon$4@77de01e6
 program(ApiEval)("b")
-// res14: Eval[String] = cats.Eval$$anon$4@740dca94
+// res14: Eval[String] = cats.Eval$$anon$4@5691b383
 program(ApiEval)("c")
-// res15: Eval[String] = cats.Eval$$anon$4@72a86e20
+// res15: Eval[String] = cats.Eval$$anon$4@5186e427
 ```
 Nothing is evaluated here. 
 The program creates an Eval that we still need to evaluate.
@@ -288,7 +287,7 @@ By wrapping ApiFuture with IO we can make it a little better behaved
 import cats.effect._
 
 implicit val contextShift: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
-// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@34ff119a
+// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@55d5e587
   
 object ApiIO extends Api[IO] {
     def get(key:String):IO[Int] = IO.fromFuture(IO(ApiFuture.get(key)))
@@ -301,23 +300,23 @@ We can use this with our program
 ```scala
 program(ApiIO)("a")
 // res17: IO[String] = Bind(
-//   Async(cats.effect.internals.IOBracket$$$Lambda$6059/1766981982@597b04b, false),
+//   Async(
+//     cats.effect.internals.IOBracket$$$Lambda$6086/1418597590@339494c6,
+//     false
+//   ),
 //   <function1>
 // )
 program(ApiIO)("b")
 // res18: IO[String] = Bind(
 //   Async(
-//     cats.effect.internals.IOBracket$$$Lambda$6059/1766981982@34608467,
+//     cats.effect.internals.IOBracket$$$Lambda$6086/1418597590@17f96805,
 //     false
 //   ),
 //   <function1>
 // )
 program(ApiIO)("c")
 // res19: IO[String] = Bind(
-//   Async(
-//     cats.effect.internals.IOBracket$$$Lambda$6059/1766981982@585fb4ed,
-//     false
-//   ),
+//   Async(cats.effect.internals.IOBracket$$$Lambda$6086/1418597590@3fdd0bf, false),
 //   <function1>
 // )
 ```
@@ -350,7 +349,7 @@ program(ApiIO)("c").attempt.unsafeRunSync()
 ```
 ## Using IO directly
 
-We could also use IO directly instead of wrapping APIFuture.
+We could also use IO directly instead of wrapping ApiFuture.
 We use `IO.delay` to suspend a computation, similar to `Eval.defer`. Or just use `IO.apply` or call directly like a constructor `IO(...)`.
 We use `IO.pure` for an immediate value, similar to `Eval.now`
 
