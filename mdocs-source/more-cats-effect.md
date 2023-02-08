@@ -51,7 +51,8 @@ someString <* rightString
 noString.productR(someString)
 noString.productL(someString)
 ```
-Both sides are evaluated, even if only the right is returned
+Both sides are evaluated, even if only the right is returned.
+In this example we are also using flatTap to add a side effecting function which has its result ignored
 ```scala mdoc
 val printer:String => IO[Unit] = i => IO(println(s"Evaluating: $i"))
 
@@ -60,6 +61,26 @@ val right = IO.pure("right").flatTap(printer)
 val pr = left *> right
 pr.unsafeRunSync()
 ```
+WARNING. `IO.pure` should only be used for non-side-effecting values.
+Its fine to use it for literal String. 
+But it would be wrong to use it for `println` and would probably break your program in a subtle way.
+The `println` would not be suspended, and would immediately evaluate.
+The `IO` created would be identical to `IO.unit` or `IO.pure(())`
+Here is a broken example of using IO.pure
+```scala mdoc
+
+val printer2:IO[Unit] = IO.pure(println(s"Evaluating: .."))
+
+val left2 = IO.pure("left").flatTap(_ => printer2)
+val right2 = IO.pure("right").flatTap(_ => printer2)
+val pr2 = left2 *> right2
+pr2.unsafeRunSync()
+```
+This example prints "Evaluating ..." before the program is evaluated.
+(It would print even if the program is not evaluated).
+The `flatTap` calls now evaluates unit and discards it but does not print as the print was not suspended in `IO`
+
+
 Apply also provides an enhanced set of `map` functions including `mapN`
 
 ```scala mdoc

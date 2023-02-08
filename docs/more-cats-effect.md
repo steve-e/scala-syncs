@@ -17,25 +17,25 @@ import cats.implicits._
 import scala.concurrent.ExecutionContext
 
 implicit val contextShift: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
-// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@61c11657
+// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@2eb649d6
 
 val io1 = IO{Thread.sleep(1000)} >> IO(println("slept"))
 // io1: IO[Unit] = Bind(
 //   Delay(<function0>),
-//   cats.syntax.FlatMapOps$$$Lambda$5992/955832901@53d0f6fc
+//   cats.syntax.FlatMapOps$$$Lambda$6015/1022829568@2a764463
 // )
 val io2 = IO{Thread.sleep(1000)} >> IO(println("slept again"))
 // io2: IO[Unit] = Bind(
 //   Delay(<function0>),
-//   cats.syntax.FlatMapOps$$$Lambda$5992/955832901@361a33ac
+//   cats.syntax.FlatMapOps$$$Lambda$6015/1022829568@3cb8ce7c
 // )
 val program = (io1 *> io2)
 // program: IO[Unit] = Bind(
 //   Bind(
 //     Delay(<function0>),
-//     cats.syntax.FlatMapOps$$$Lambda$5992/955832901@53d0f6fc
+//     cats.syntax.FlatMapOps$$$Lambda$6015/1022829568@2a764463
 //   ),
-//   cats.FlatMap$$Lambda$5993/543588293@b9f059e
+//   cats.FlatMap$$Lambda$6016/1359412767@5794e58
 // )
 
 program.unsafeRunSync()
@@ -80,7 +80,8 @@ noString.productR(someString)
 noString.productL(someString)
 // res9: Option[String] = None
 ```
-Both sides are evaluated, even if only the right is returned
+Both sides are evaluated, even if only the right is returned.
+In this example we are also using flatTap to add a side effecting function which has its result ignored
 ```scala
 val printer:String => IO[Unit] = i => IO(println(s"Evaluating: $i"))
 // printer: String => IO[Unit] = <function1>
@@ -88,23 +89,57 @@ val printer:String => IO[Unit] = i => IO(println(s"Evaluating: $i"))
 val left = IO.pure("left").flatTap(printer)
 // left: IO[String] = Bind(
 //   Pure("left"),
-//   cats.FlatMap$$Lambda$5998/1860780971@6945a12e
+//   cats.FlatMap$$Lambda$6021/1460079866@7395935f
 // )
 val right = IO.pure("right").flatTap(printer)
 // right: IO[String] = Bind(
 //   Pure("right"),
-//   cats.FlatMap$$Lambda$5998/1860780971@34047249
+//   cats.FlatMap$$Lambda$6021/1460079866@39534050
 // )
 val pr = left *> right
 // pr: IO[String] = Bind(
-//   Bind(Pure("left"), cats.FlatMap$$Lambda$5998/1860780971@6945a12e),
-//   cats.FlatMap$$Lambda$5993/543588293@268e401b
+//   Bind(Pure("left"), cats.FlatMap$$Lambda$6021/1460079866@7395935f),
+//   cats.FlatMap$$Lambda$6016/1359412767@38684b5
 // )
 pr.unsafeRunSync()
 // Evaluating: left
 // Evaluating: right
 // res10: String = "right"
 ```
+WARNING. `IO.pure` should only be used for non-side-effecting values.
+Its fine to use it for literal String. 
+But it would be wrong to use it for `println` and would probably break your program in a subtle way.
+The `println` would not be suspended, and would immediately evaluate.
+The `IO` created would be identical to `IO.unit` or `IO.pure(())`
+Here is a broken example of using IO.pure
+```scala
+val printer2:IO[Unit] = IO.pure(println(s"Evaluating: .."))
+// Evaluating: ..
+// printer2: IO[Unit] = Pure(())
+
+val left2 = IO.pure("left").flatTap(_ => printer2)
+// left2: IO[String] = Bind(
+//   Pure("left"),
+//   cats.FlatMap$$Lambda$6021/1460079866@4c421113
+// )
+val right2 = IO.pure("right").flatTap(_ => printer2)
+// right2: IO[String] = Bind(
+//   Pure("right"),
+//   cats.FlatMap$$Lambda$6021/1460079866@13127caf
+// )
+val pr2 = left2 *> right2
+// pr2: IO[String] = Bind(
+//   Bind(Pure("left"), cats.FlatMap$$Lambda$6021/1460079866@4c421113),
+//   cats.FlatMap$$Lambda$6016/1359412767@3060ef5d
+// )
+pr2.unsafeRunSync()
+// res11: String = "right"
+```
+This example prints "Evaluating ..." before the program is evaluated.
+(It would print even if the program is not evaluated).
+The `flatTap` calls now evaluates unit and discards it but does not print as the print was not suspended in `IO`
+
+
 Apply also provides an enhanced set of `map` functions including `mapN`
 
 ```scala
@@ -117,9 +152,9 @@ val invalid = none[String]
 
 
 (valid1, valid2).mapN((a,b) => s"$a and $b") 
-// res11: Option[String] = Some("success! and another success!") 
+// res12: Option[String] = Some("success! and another success!") 
 (valid1, valid1, valid2).mapN((a,b,c) => a.length + b.length + c.length) 
-// res12: Option[Int] = Some(32)
+// res13: Option[Int] = Some(32)
 ```
 The `Applicative` type class is an `Apply` with a `pure` method.
 We have seen that aspect already as `Monad` gets its `pure` by extending `Applicative`
@@ -152,14 +187,14 @@ val listOfIO:List[IO[Unit]] = inputs.map(process)
 val ioOfList:IO[List[Unit]] = listOfIO.sequence  
 // ioOfList: IO[List[Unit]] = Bind(
 //   Delay(<function0>),
-//   cats.FlatMap$$Lambda$6014/1654196543@554e12a1
+//   cats.FlatMap$$Lambda$6037/778149422@77466c8
 // )  
 
 ioOfList.unsafeRunSync()
 // Processing: [Foo]
 // Processing: [bar]
 // Processing: [BAZ]
-// res13: List[Unit] = List((), (), ())
+// res14: List[Unit] = List((), (), ())
 ```
 
 These 2 operations can be combined using `traverse`. 
@@ -169,13 +204,13 @@ This is more efficient as the list is traversed only once.
 val runner = inputs.traverse(process)
 // runner: IO[List[Unit]] = Bind(
 //   Delay(<function0>),
-//   cats.FlatMap$$Lambda$6014/1654196543@11c695f7
+//   cats.FlatMap$$Lambda$6037/778149422@5be235bc
 // )
 runner.unsafeRunSync()
 // Processing: [Foo]
 // Processing: [bar]
 // Processing: [BAZ]
-// res14: List[Unit] = List((), (), ())
+// res15: List[Unit] = List((), (), ())
 ```
 
 We could run the effects in parallel. 
@@ -187,9 +222,9 @@ val parallel = inputs.parTraverse(process)
 // parallel: IO[List[Unit]] = Async(<function2>, true)
 parallel.unsafeRunSync()
 // Processing: [BAZ]
-// Processing: [Foo]
 // Processing: [bar]
-// res15: List[Unit] = List((), (), ())
+// Processing: [Foo]
+// res16: List[Unit] = List((), (), ())
 ```
 
 Both `traverse` and `sequence` appear in the standard library on `Future`. 
@@ -205,10 +240,10 @@ One way is to use `List.map`, then `List.fold`, with `>>` as the combiner functi
 val all = inputs.map(process).fold(IO.unit)(_ >> _)
 // all: IO[Unit] = Bind(
 //   Bind(
-//     Bind(Pure(()), cats.syntax.FlatMapOps$$$Lambda$5992/955832901@6473bbc),
-//     cats.syntax.FlatMapOps$$$Lambda$5992/955832901@521d2df7
+//     Bind(Pure(()), cats.syntax.FlatMapOps$$$Lambda$6015/1022829568@5b95dd6b),
+//     cats.syntax.FlatMapOps$$$Lambda$6015/1022829568@6cb8cb43
 //   ),
-//   cats.syntax.FlatMapOps$$$Lambda$5992/955832901@7763f60f
+//   cats.syntax.FlatMapOps$$$Lambda$6015/1022829568@48dea23a
 // )
 all.unsafeRunSync()
 // Processing: [Foo]
@@ -221,8 +256,8 @@ This makes use of an implicitly available for `Monoid[IO]`
 ```scala
 val k = inputs.foldMapM(process)
 // k: IO[Unit] = Bind(
-//   Map(Delay(<function0>), scala.Function1$$Lambda$615/566922409@522fbc39, 1),
-//   cats.StackSafeMonad$$Lambda$6036/1222805622@6d8af71b
+//   Map(Delay(<function0>), scala.Function1$$Lambda$613/880728495@25b3148, 1),
+//   cats.StackSafeMonad$$Lambda$6059/1636529446@77d0daed
 // )
 k.unsafeRunSync()
 // Processing: [Foo]
@@ -249,10 +284,10 @@ val addition = new Monoid[Int] {
                    val empty = 0
                    def combine(a:Int, b:Int):Int = a + b 
                 }
-// addition: AnyRef with Monoid[Int]{val empty: Int} = repl.MdocSession$MdocApp$$anon$1@56c31dc8
+// addition: AnyRef with Monoid[Int]{val empty: Int} = repl.MdocSession$MdocApp$$anon$1@5d98e587
 
 ints.combineAll(addition)
-// res18: Int = 15
+// res19: Int = 15
 ```
 
 Actually there is an additive `Monoid[Int]` available implicitly.
@@ -260,7 +295,7 @@ You can use that if you want addition
 
 ```scala
 ints.combineAll 
-// res19: Int = 15
+// res20: Int = 15
 ```
 This implicit `Monoid[Int]` is defined as a `CommutativeGroup[Int]` which is also
 a `Group[Int]` and a `Semigroup[Int]`. Groups are Monoids, Monoids are Semigroups.
@@ -277,10 +312,10 @@ val multiplication = new Monoid[Int] {
                    val empty = 1
                    def combine(a:Int, b:Int):Int = a * b 
                 }
-// multiplication: AnyRef with Monoid[Int]{val empty: Int} = repl.MdocSession$MdocApp$$anon$2@3e784a91
+// multiplication: AnyRef with Monoid[Int]{val empty: Int} = repl.MdocSession$MdocApp$$anon$2@60ea437c
 
 ints.combineAll(multiplication)
-// res20: Int = 120
+// res21: Int = 120
 ```
 ### List monoid
 A Monoid is not just for numeric types but can be created for IO, List, String, Unit, etc.
@@ -294,7 +329,7 @@ def concatination[A] = new Monoid[List[A]] {
                 }
 
 lists.combineAll(concatination)
-// res21: List[Int] = List(1, 2, 3, 4, 5, 6, 7)
+// res22: List[Int] = List(1, 2, 3, 4, 5, 6, 7)
 ```
 
 If we don't have a monoid, we can use `fold`.
@@ -302,5 +337,5 @@ Subtraction is not associative, so we should not create a monoid instance for it
 
 ```scala
 ints.fold(0)((a,b) => a - b)
-// res22: Int = -15
+// res23: Int = -15
 ```
