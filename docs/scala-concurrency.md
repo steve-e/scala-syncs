@@ -129,7 +129,7 @@ import scala.concurrent.duration.DurationInt
 import java.util.concurrent.CountDownLatch
 
 val latch = new CountDownLatch(2)
-// latch: CountDownLatch = java.util.concurrent.CountDownLatch@f76ee84[Count = 0]
+// latch: CountDownLatch = java.util.concurrent.CountDownLatch@1826e14b[Count = 0]
 
 val future = Future {
  println("Waiting on latch")
@@ -188,11 +188,11 @@ val fx = Future {
 println("main completes future")
 // main completes future
 p.success("Hello from main thread")
+// await result
 // res16: Promise[String] = Future(Success(Hello from main thread))
 println("main awaits future")
 // main awaits future
 Await.ready(fx, 2400.millis)
-// await result
 // Got [Hello from main thread]
 // res18: Future[Unit] = Future(Success(()))
 ```
@@ -236,7 +236,7 @@ Future {
   }
   println("future  released LockB")
 }
-// res20: Future[Unit] = Future(Success(()))
+// res20: Future[Unit] = Future(Failure(java.util.concurrent.TimeoutException: Futures timed out after [5 seconds]))
 
 println("Future created")
 // Future created
@@ -251,6 +251,9 @@ LockA.synchronized{
   print("main released LockB")
 
 }
+// future synchronized on LockB
+// future synchronized on LockA
+// failed [Futures timed out after [5 seconds]]
 // main synchronized on LockA
 // main synchronized on LockB
 // main released LockB

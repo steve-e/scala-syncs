@@ -60,7 +60,18 @@ val right = IO.pure("right").flatTap(printer)
 val pr = left *> right
 pr.unsafeRunSync()
 ```
+Apply also provides an enhanced set of `map` functions including `mapN`
 
+```scala mdoc
+val valid1 = "success!".some 
+val valid2 = "another success!".some
+val invalid = none[String]
+
+
+(valid1, valid2).mapN((a,b) => s"$a and $b") 
+(valid1, valid1, valid2).mapN((a,b,c) => a.length + b.length + c.length) 
+
+```
 The `Applicative` type class is an `Apply` with a `pure` method.
 We have seen that aspect already as `Monad` gets its `pure` by extending `Applicative`
 
