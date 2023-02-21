@@ -18,13 +18,17 @@ lazy val artifactorySettings = List(
   credentials += artifactoryCredentials
 )
 
+
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
+
 lazy val root = (project in file("."))
   .settings(
     name := "scala-syncs",
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % "2.1.1",
       "org.typelevel" %% "cats-effect" % "2.1.2",
-      "org.scalatest" %% "scalatest" % "3.2.9"
+      "org.scalatest" %% "scalatest" % "3.2.9",
+      "org.typelevel" %% "simulacrum" % "1.0.1"
     ),
    artifactorySettings
   )
