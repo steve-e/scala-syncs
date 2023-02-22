@@ -139,7 +139,7 @@ import AnnotatedMonoid.ops._
 
 2 combine 3
 
-1 |*| 2
+1 |+| 2
 
 ```
 and use our monoid in APIs
@@ -186,7 +186,8 @@ object AnnotatedMonoid {
   trait Ops[A] {
     def typeClassInstance: AnnotatedMonoid[A]
     def self: A
-    def |+|(y: A): A = typeClassInstance.combine(self, y)
+    def combine(y: A): A = typeClassInstance.combine(self, y)
+    def |+|(y: A): A = combine(y)
   }
 
   trait ToAnnotatedMonoidOps {
