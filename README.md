@@ -25,6 +25,7 @@ sbt docs/mdoc
 - [Scala Concurrency Introduction](docs/scala-concurrency.md)
 - More on [Cats type classes in Cats Effect](docs/more-cats-effect.md)
 - Creating our [own custom type classes](docs/custom-typeclass.md)
+- Cats Effect: [Fibers and Errors](docs/cats-effect-fibers-and-errors.md)
 
 ### Absolute basics on of Category theory
 - [What is a category](docs/category.md)
