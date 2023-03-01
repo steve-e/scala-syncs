@@ -3,11 +3,11 @@
 
 ### Fiber
 Cats effect includes a `Fiber` type class that represents a computation that can happen in parallel.
-Starting a new Fiber can be thought of as starting a lightweight thread.
-A `Fiber` is created by calling `start` on an `IO`
+Starting a new `Fiber` can be thought of as starting a lightweight thread.
+A `Fiber` can be created by calling `start` on an `IO`
 
 This example is extended from the cats effect documentation. 
-It illustrates starting Fibers, concurrency and error handling.
+It illustrates starting a `Fiber`, concurrency and error handling.
 
 ```scala mdoc
 import cats.effect._
@@ -27,7 +27,7 @@ def launch(tripUp: Boolean): IO[Unit] = {
   val launchMissiles: IO[Unit] = stdOut("launching ...") >> Timer[IO].sleep(1.second) >> raiseError("boom!")
 
   val trip = if (tripUp) raiseError("Whoops! I tripped")
-  else IO.unit
+             else IO.unit
 
   for {
     fiber <- launchMissiles.start
@@ -43,7 +43,7 @@ def launch(tripUp: Boolean): IO[Unit] = {
 ```
 
 Running the program without tripping up on the way to the bunker, and successfully launch missiles.
-We use `attempt` to materialise the result as an Either, capturing an Exception instead of throwing it.
+We use `attempt` to materialise the result as an `Either`, capturing an `Exception` instead of throwing it.
 
 ```scala mdoc
 launch(tripUp = false).attempt.unsafeRunSync()
@@ -55,11 +55,11 @@ Running the program tripping up on the way to the bunker, cancelling the launch
 launch(tripUp = true).attempt.unsafeRunSync()
 ```
 
-## Guaranteeing actions in the face of errors
+### Guaranteeing actions in the face of errors
 
 We can ensure that the special handling of an object in various ways
 
-## Guarantee
+### Guarantee
 
 The guarantee takes an `IO[Unit]` that is always executed, even if there is an error
 ```scala mdoc
@@ -67,7 +67,7 @@ val ops = stdOut("Starting ...") >> raiseError("Halting !!") >> stdOut("never ha
 ops.guarantee(stdOut("definitely happens")).attempt.unsafeRunSync()
 ```
 
-## Bracket
+### Bracket
 
 The `bracket` takes 2 functions. The first operates on the enclosed type, but suspending the result in `IO`.
 The second function "releases" the type with a side effecting result of `IO[Unit]`.
@@ -91,17 +91,17 @@ writeFile.unsafeRunSync()
 
 ```
 
-## Resource
+### Resource
 `Resource` combines acquisition and release of a type. 
 There is a `Monad` instance for `Resource`, so it is easier to compose than `Bracket`.
 
-Here we compose a File and a FileWriter.
+Here we compose a `File` and a `FileWriter`.
 They are both released automatically in the right order.
 
 ```scala mdoc
 
-val fileResource = Resource.make(IO(new File("/tmp","file-test ")))(file => IO(file.delete()) >> stdOut("deleting file"))
-def writerResource(file:File) =  Resource.make(IO(new FileWriter(file)))(w => IO(w.close()) >> stdOut("closing writer"))
+val fileResource = Resource.make(IO(new File("/tmp","file-test ")) <* stdOut("creating file") )(file => IO(file.delete()) >> stdOut("deleting file"))
+def writerResource(file:File) =  Resource.make(IO(new FileWriter(file)) <* stdOut("creating writer"))(w => IO(w.close()) >> stdOut("closing writer"))
 
 val writerWithDeletingFile =  for {
     file <- fileResource
@@ -109,7 +109,7 @@ val writerWithDeletingFile =  for {
 } yield writer
 
 val resourceEx = writerWithDeletingFile.use(f =>
-    IO(f.write("Hello")) *> IO(f.flush())
+    IO(f.write("Hello")) *> stdOut("Wrote file") *> IO(f.flush())
 )
 
 resourceEx.unsafeRunSync()

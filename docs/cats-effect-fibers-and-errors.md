@@ -1,10 +1,13 @@
-# More cats effects - Fiber and error handling
+# More cats effects 
+## Fiber and error handling
 
+### Fiber
 Cats effect includes a `Fiber` type class that represents a computation that can happen in parallel.
-Starting a new Fiber can be thought of as starting a lightweight thread.
+Starting a new `Fiber` can be thought of as starting a lightweight thread.
+A `Fiber` can be created by calling `start` on an `IO`
 
 This example is extended from the cats effect documentation. 
-It illustrates starting Fibers, concurrency and error handling.
+It illustrates starting a `Fiber`, concurrency and error handling.
 
 ```scala
 import cats.effect._
@@ -14,9 +17,9 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.DurationInt
 
 implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)
-// timer: Timer[IO] = cats.effect.internals.IOTimer@54e4bd41
+// timer: Timer[IO] = cats.effect.internals.IOTimer@56bfa63b
 implicit val contextShift: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
-// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@467eea41
+// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@7d18b23
 
 def stdOut(message: String): IO[Unit] = IO(println(message))
 def raiseError(message:String): IO[Unit] = IO.raiseError(new Exception(message))
@@ -26,7 +29,7 @@ def launch(tripUp: Boolean): IO[Unit] = {
   val launchMissiles: IO[Unit] = stdOut("launching ...") >> Timer[IO].sleep(1.second) >> raiseError("boom!")
 
   val trip = if (tripUp) raiseError("Whoops! I tripped")
-  else IO.unit
+             else IO.unit
 
   for {
     fiber <- launchMissiles.start
@@ -41,21 +44,14 @@ def launch(tripUp: Boolean): IO[Unit] = {
 }
 ```
 
-Running the program without tripping up on the way to the bunker, and successfully launch missiles
+Running the program without tripping up on the way to the bunker, and successfully launch missiles.
+We use `attempt` to materialise the result as an `Either`, capturing an `Exception` instead of throwing it.
 
 ```scala
 launch(tripUp = false).attempt.unsafeRunSync()
 // launching ...
 // To the bunker!!!
 // res0: Either[Throwable, Unit] = Left(java.lang.Exception: boom!)
-```
-in worksheet prints the following but output is reduced in mdoc
-```
-launching ...
-To the bunker!!!
-java.lang.Exception: boom!
-  at .launch(<console>:25)
-  ... 37 elided
 ```
 
 Running the program tripping up on the way to the bunker, cancelling the launch
@@ -68,21 +64,12 @@ launch(tripUp = true).attempt.unsafeRunSync()
 // Cancel launch!!
 // res1: Either[Throwable, Unit] = Left(java.lang.Exception: Whoops! I tripped)
 ```
-in worksheet prints the following but output is reduced in mdoc
-```
-To the bunker!!!
-launching ...
-Whoops! I tripped
-Cancel launch!!
-java.lang.Exception: Whoops! I tripped
-  at .launch(<console>:27)
-  ... 37 elided
-```
-## Guaranteeing actions in the face of errors
+
+### Guaranteeing actions in the face of errors
 
 We can ensure that the special handling of an object in various ways
 
-## Guarantee
+### Guarantee
 
 The guarantee takes an `IO[Unit]` that is always executed, even if there is an error
 ```scala
@@ -90,9 +77,9 @@ val ops = stdOut("Starting ...") >> raiseError("Halting !!") >> stdOut("never ha
 // ops: IO[Unit] = Bind(
 //   Bind(
 //     Delay(<function0>),
-//     cats.syntax.FlatMapOps$$$Lambda$5589/1063134298@3ff99291
+//     cats.syntax.FlatMapOps$$$Lambda$5615/543530813@7d36449e
 //   ),
-//   cats.syntax.FlatMapOps$$$Lambda$5589/1063134298@4bf4f852
+//   cats.syntax.FlatMapOps$$$Lambda$5615/543530813@5072090e
 // )
 ops.guarantee(stdOut("definitely happens")).attempt.unsafeRunSync()
 // Starting ...
@@ -100,7 +87,7 @@ ops.guarantee(stdOut("definitely happens")).attempt.unsafeRunSync()
 // res2: Either[Throwable, Unit] = Left(java.lang.Exception: Halting !!)
 ```
 
-## Bracket
+### Bracket
 
 The `bracket` takes 2 functions. The first operates on the enclosed type, but suspending the result in `IO`.
 The second function "releases" the type with a side effecting result of `IO[Unit]`.
@@ -108,7 +95,7 @@ The second function "releases" the type with a side effecting result of `IO[Unit
 ```scala
 val bracketEx = IO.pure("a value").bracket(v => raiseError(s"Halting $v !!"))(v => stdOut(s"release $v"))
 // bracketEx: IO[Unit] = Async(
-//   cats.effect.internals.IOBracket$$$Lambda$5627/561848488@7fa40e73,
+//   cats.effect.internals.IOBracket$$$Lambda$5653/997326670@4228011e,
 //   false
 // )
 bracketEx.attempt.unsafeRunSync()
@@ -129,23 +116,30 @@ val writeFile = IO(new File("/tmp","bracket-test ")).bracket { file =>
 }(file => IO(println("File Length "+file.length())) *> IO(file.delete())
 )
 // writeFile: IO[Unit] = Async(
-//   cats.effect.internals.IOBracket$$$Lambda$5627/561848488@2629949,
+//   cats.effect.internals.IOBracket$$$Lambda$5653/997326670@2118183,
 //   false
 // )
 writeFile.unsafeRunSync()
 // File Length 5
 ```
 
-## Resource
-`Resource` allows combines acquisition and release of a type. 
-There is a `Monad` instance for `Resource`, so it is easier to compose than `Bracket`
+### Resource
+`Resource` combines acquisition and release of a type. 
+There is a `Monad` instance for `Resource`, so it is easier to compose than `Bracket`.
+
+Here we compose a `File` and a `FileWriter`.
+They are both released automatically in the right order.
 
 ```scala
-val fileResource = Resource.make(IO(new File("/tmp","file-test ")))(file => IO(file.delete()) >> stdOut("deleting file"))
+val fileResource = Resource.make(IO(new File("/tmp","file-test ")) <* stdOut("creating file") )(file => IO(file.delete()) >> stdOut("deleting file"))
 // fileResource: Resource[IO, File] = Allocate(
-//   Map(Delay(<function0>), scala.Function1$$Lambda$640/1938770829@396538f3, 1)
+//   Map(
+//     Bind(Delay(<function0>), cats.FlatMap$$Lambda$5657/93358390@570ea59),
+//     scala.Function1$$Lambda$681/111900554@5f9e2faf,
+//     1
+//   )
 // )
-def writerResource(file:File) =  Resource.make(IO(new FileWriter(file)))(w => IO(w.close()) >> stdOut("closing writer"))
+def writerResource(file:File) =  Resource.make(IO(new FileWriter(file)) <* stdOut("creating writer"))(w => IO(w.close()) >> stdOut("closing writer"))
 
 val writerWithDeletingFile =  for {
     file <- fileResource
@@ -153,20 +147,27 @@ val writerWithDeletingFile =  for {
 } yield writer
 // writerWithDeletingFile: Resource[[x]IO[x], FileWriter] = Bind(
 //   Allocate(
-//     Map(Delay(<function0>), scala.Function1$$Lambda$640/1938770829@396538f3, 1)
+//     Map(
+//       Bind(Delay(<function0>), cats.FlatMap$$Lambda$5657/93358390@570ea59),
+//       scala.Function1$$Lambda$681/111900554@5f9e2faf,
+//       1
+//     )
 //   ),
 //   <function1>
 // )
 
 val resourceEx = writerWithDeletingFile.use(f =>
-    IO(f.write("Hello")) *> IO(f.flush())
+    IO(f.write("Hello")) *> stdOut("Wrote file") *> IO(f.flush())
 )
 // resourceEx: IO[Unit] = Async(
-//   cats.effect.internals.IOBracket$$$Lambda$5627/561848488@6e7319e8,
+//   cats.effect.internals.IOBracket$$$Lambda$5653/997326670@6d71051b,
 //   false
 // )
 
 resourceEx.unsafeRunSync()
+// creating file
+// creating writer
+// Wrote file
 // closing writer
 // deleting file
 ```
