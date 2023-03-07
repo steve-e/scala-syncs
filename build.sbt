@@ -24,6 +24,7 @@ addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.fu
 lazy val root = (project in file("."))
   .settings(
     name := "scala-syncs",
+    scalacOptions += "-Ypartial-unification",
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % "2.1.1",
       "org.typelevel" %% "cats-effect" % "2.1.2",
@@ -36,6 +37,7 @@ lazy val root = (project in file("."))
 lazy val docs = project
   .in(file("mdocs-source")) // important: it must not be docs/
   .settings(
+    scalacOptions += "-Ypartial-unification",
     mdocOut := file("docs"),
     mdocIn := file("mdocs-source")
   )

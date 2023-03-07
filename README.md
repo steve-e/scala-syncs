@@ -26,13 +26,14 @@ sbt docs/mdoc
 - More on [Cats type classes in Cats Effect](docs/more-cats-effect.md)
 - Creating our [own custom type classes](docs/custom-typeclass.md)
 - Cats Effect: [Fibers and Errors](docs/cats-effect-fibers-and-errors.md)
+- [Validated and Applicative](docs/validated-and-applicative.md)
 
 ### Absolute basics on of Category theory
 - [What is a category](docs/category.md)
 - [Functor](docs/functor.md)
 
 ## scala
-- [Functional Programming in Scala](https://people.cs.ksu.edu/~schmidt/705a/Scala/Programming-in-Scala.pdf) 
+- [Programming in Scala](https://people.cs.ksu.edu/~schmidt/705a/Scala/Programming-in-Scala.pdf) 
 ## Functional programming and Cats resources
 
 - Cats [documentation](https://typelevel.org/cats/)
