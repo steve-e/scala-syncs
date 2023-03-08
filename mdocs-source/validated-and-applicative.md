@@ -110,18 +110,51 @@ case class Invalid[+E](e: E) extends Validated[E, Nothing]
 ```
 
 `Validated` is similar to `Either` in that it has two type parameters, the left one for errors and the right for success.
-
-However, it does not have a `Monad` instance, so we cannot use `flatMap` or a `for` comprhension.
-It does have an `Applicative` and we can use that instead
-
 ```scala mdoc
 import  cats.data._
+import  cats.data.Validated._
 
+  val event1:Validated[String,String] = Validated.catchOnly[Exception]("event 1 ok").leftMap(_.getMessage)
+  val event2:Validated[String,String] = valid("event 2, definitely ok")
+  val event3:Validated[String,String] = Validated.catchOnly[Exception]((1/0).toString).leftMap(_.getMessage)
+  val event4:Validated[String,String] = invalid("fail")
+```
+However, it does not have a `Monad` instance, so we cannot use `flatMap` or a `for` comprehension.
+
+No `flatMap`
+```scala mdoc:fail
+val event1after2 = event1.flatMap(e => event2)
+```
+or syntax for `Monad`
+```scala mdoc:fail
+val event1after2 = event1 >> event2
+```
+It does have an `Applicative` and we can use that instead
+```scala mdoc
+
+  val event1then2 = event1 *> event2
+  val twoEvents = (event1, event2).mapN((a,b) => s"Got $a, $b" )
+  val allEvents = (event1, event2, event3, event4).mapN((a, b, c, d) => s"Got $a $b $c $d")
+```
+Notice in the event of multiple failures that the errors are combined using a Semigroup for String.
+It is not ideal to just concatenate error Strings.
+Usually a collection is used for errors instead.
+`Validated` provides built-in support for using `NonEmptyList` or `NonEmptyChain` instead.
+```scala mdoc
+  val combinedEventErrors = (event3.toValidatedNec, event4.toValidatedNec).mapN((a, b) => s"Got $a $b")
+  combinedEventErrors.leftMap(_.toList.mkString("\n"))
+
+```
+
+We can rewrite the program using `Either` to use `Validated` internally instead
+```scala mdoc
 
 def discount(driver:Boolean, age:Int, sex:Sex):Either[NonEmptyChain[String],Int] = {
-  (Validated.cond(driver, 0, "No discount for non-drivers").toValidatedNec *>
+  (
+    Validated.cond(driver, 0, "No discount for non-drivers").toValidatedNec *>
     Validated.cond(age >= 21, 40, "No discount for customers under 21").toValidatedNec,
-    Validated.cond(sex == Female, 83, "No discount for male customers").toValidatedNec).mapN((a,b) => a + b).toEither
+    Validated.cond(sex == Female, 83, "No discount for male customers").toValidatedNec
+  ).mapN((a,b) => a + b).toEither
 }
 
 def validatedInsuranceDiscount(input: Input):Either[String,Int] =
@@ -129,7 +162,8 @@ def validatedInsuranceDiscount(input: Input):Either[String,Int] =
     isDriver(input).toValidatedNec,
     getAge(input).toValidatedNec,
     getSex(input).toValidatedNec
-    ).mapN[Either[NonEmptyChain[String],Int]](discount).toEither.flatten.leftMap(_.toList.mkString("\n"))
+  ).mapN[Either[NonEmptyChain[String],Int]](discount)
+  .toEither.flatten.leftMap(_.toList.mkString("\n"))
 ```
 
 

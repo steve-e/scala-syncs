@@ -127,18 +127,70 @@ case class Invalid[+E](e: E) extends Validated[E, Nothing]
 ```
 
 `Validated` is similar to `Either` in that it has two type parameters, the left one for errors and the right for success.
-
-However, it does not have a `Monad` instance, so we cannot use `flatMap` or a `for` comprhension.
-It does have an `Applicative` and we can use that instead
-
 ```scala
 import  cats.data._
+import  cats.data.Validated._
 
+  val event1:Validated[String,String] = Validated.catchOnly[Exception]("event 1 ok").leftMap(_.getMessage)
+// event1: Validated[String, String] = Valid("event 1 ok")
+  val event2:Validated[String,String] = valid("event 2, definitely ok")
+// event2: Validated[String, String] = Valid("event 2, definitely ok")
+  val event3:Validated[String,String] = Validated.catchOnly[Exception]((1/0).toString).leftMap(_.getMessage)
+// event3: Validated[String, String] = Invalid("/ by zero")
+  val event4:Validated[String,String] = invalid("fail")
+// event4: Validated[String, String] = Invalid("fail")
+```
+However, it does not have a `Monad` instance, so we cannot use `flatMap` or a `for` comprehension.
 
+No `flatMap`
+```scala
+val event1after2 = event1.flatMap(e => event2)
+// error: value flatMap is not a member of cats.data.Validated[String,String]
+// val event1after2 = event1.flatMap(e => event2)
+//                    ^^^^^^^^^^^^^^
+```
+or syntax for `Monad`
+```scala
+val event1after2 = event1 >> event2
+// error: value >> is not a member of cats.data.Validated[String,String]
+// val event1after2 = event1.flatMap(e => event2)
+//                    ^^^^^^^^^
+```
+It does have an `Applicative` and we can use that instead
+```scala
+val event1then2 = event1 *> event2
+// event1then2: Validated[String, String] = Valid("event 2, definitely ok")
+  val twoEvents = (event1, event2).mapN((a,b) => s"Got $a, $b" )
+// twoEvents: Validated[String, String] = Valid(
+//   "Got event 1 ok, event 2, definitely ok"
+// )
+  val allEvents = (event1, event2, event3, event4).mapN((a, b, c, d) => s"Got $a $b $c $d")
+// allEvents: Validated[String, String] = Invalid("/ by zerofail")
+```
+Notice in the event of multiple failures that the errors are combined using a Semigroup for String.
+It is not ideal to just concatenate error Strings.
+Usually a collection is used for errors instead.
+`Validated` provides built-in support for using `NonEmptyList` or `NonEmptyChain` instead.
+```scala
+val combinedEventErrors = (event3.toValidatedNec, event4.toValidatedNec).mapN((a, b) => s"Got $a $b")
+// combinedEventErrors: ValidatedNec[String, String] = Invalid(
+//   Append(Singleton("/ by zero"), Singleton("fail"))
+// )
+  combinedEventErrors.leftMap(_.toList.mkString("\n"))
+// res5: Validated[String, String] = Invalid(
+//   """/ by zero
+// fail"""
+// )
+```
+
+We can rewrite the program using `Either` to use `Validated` internally instead
+```scala
 def discount(driver:Boolean, age:Int, sex:Sex):Either[NonEmptyChain[String],Int] = {
-  (Validated.cond(driver, 0, "No discount for non-drivers").toValidatedNec *>
+  (
+    Validated.cond(driver, 0, "No discount for non-drivers").toValidatedNec *>
     Validated.cond(age >= 21, 40, "No discount for customers under 21").toValidatedNec,
-    Validated.cond(sex == Female, 83, "No discount for male customers").toValidatedNec).mapN((a,b) => a + b).toEither
+    Validated.cond(sex == Female, 83, "No discount for male customers").toValidatedNec
+  ).mapN((a,b) => a + b).toEither
 }
 
 def validatedInsuranceDiscount(input: Input):Either[String,Int] =
@@ -146,20 +198,21 @@ def validatedInsuranceDiscount(input: Input):Either[String,Int] =
     isDriver(input).toValidatedNec,
     getAge(input).toValidatedNec,
     getSex(input).toValidatedNec
-    ).mapN[Either[NonEmptyChain[String],Int]](discount).toEither.flatten.leftMap(_.toList.mkString("\n"))
+  ).mapN[Either[NonEmptyChain[String],Int]](discount)
+  .toEither.flatten.leftMap(_.toList.mkString("\n"))
 ```
 
 
 Run the program with valid input
 ```scala
 validatedInsuranceDiscount(discountInput)
-// res3: Either[String, Int] = Right(123)
+// res6: Either[String, Int] = Right(123)
 ```
 Great this customer gets the discount.
 
 ```scala
 validatedInsuranceDiscount(noDiscountInput)
-// res4: Either[String, Int] = Left(
+// res7: Either[String, Int] = Left(
 //   """No discount for customers under 21
 // No discount for male customers"""
 // )
@@ -171,7 +224,7 @@ Both reasons are given
 Run the program with invalid input
 ```scala
 validatedInsuranceDiscount(wrongFormatInput)
-// res5: Either[String, Int] = Left(
+// res8: Either[String, Int] = Left(
 //   """driver status was not true or false
 // Could not read [twenty nine] as an integer
 // Sex not one of `male` or `female`"""
