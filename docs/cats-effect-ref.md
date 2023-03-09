@@ -32,7 +32,7 @@ val bad = Future.traverse(ints){i => Future {
 Await.ready(bad, 10.seconds)
 // res0: Future[List[Unit]] = Future(Success(List((), (), (), (), (), (), (), (), (), ())))
 l
-// res1: List[Int] = List(8, 9, 7, 4, 10, 3, 2, 1)
+// res1: List[Int] = List(7, 6, 8, 9, 5, 4, 2, 1)
 l.size
 // res2: Int = 8
 ```
@@ -66,10 +66,11 @@ last read.
 This could be implemented with locks or synchronised blocks, but in fact uses a single check and set instruction, which
 has better performance.
 
-The basic operation of `AtomicReference` is `compareAndSet(expect:V, update:):Boolean`.
-This method a value to set and an expected existing value.
+The basic operation of `AtomicReference` is `public final boolean compareAndSet(V expect, V update) `.
+This method takes a value to set and an expected existing value.
 It sets the reference to hold the `update` value if and only if the reference currently hold the `expect` value.
 It returns true if the update succeeded.
+
 This is usually executed in a while loop.
 The implementation of `updateAndGet` that we use below is as follows
 ```java
@@ -97,11 +98,11 @@ val f = Future.traverse(ints){i => Future {
       i :: list
     })
   }}
-// f: Future[List[List[Int]]] = Future(Success(List(List(1), List(2, 7, 8, 5, 1), List(3, 2, 7, 8, 5, 1), List(4, 9, 6, 3, 2, 7, 8, 5, 1), List(5, 1), List(6, 3, 2, 7, 8, 5, 1), List(7, 8, 5, 1), List(8, 5, 1), List(9, 6, 3, 2, 7, 8, 5, 1), List(10, 4, 9, 6, 3, 2, 7, 8, 5, 1))))
+// f: Future[List[List[Int]]] = Future(Success(List(List(1, 3, 9, 8), List(2, 1, 3, 9, 8), List(3, 9, 8), List(4, 7, 2, 1, 3, 9, 8), List(5, 10, 6, 4, 7, 2, 1, 3, 9, 8), List(6, 4, 7, 2, 1, 3, 9, 8), List(7, 2, 1, 3, 9, 8), List(8), List(9, 8), List(10, 6, 4, 7, 2, 1, 3, 9, 8))))
 Await.ready(f, 110.seconds)
-// res3: Future[List[List[Int]]] = Future(Success(List(List(1), List(2, 7, 8, 5, 1), List(3, 2, 7, 8, 5, 1), List(4, 9, 6, 3, 2, 7, 8, 5, 1), List(5, 1), List(6, 3, 2, 7, 8, 5, 1), List(7, 8, 5, 1), List(8, 5, 1), List(9, 6, 3, 2, 7, 8, 5, 1), List(10, 4, 9, 6, 3, 2, 7, 8, 5, 1))))
+// res3: Future[List[List[Int]]] = Future(Success(List(List(1, 3, 9, 8), List(2, 1, 3, 9, 8), List(3, 9, 8), List(4, 7, 2, 1, 3, 9, 8), List(5, 10, 6, 4, 7, 2, 1, 3, 9, 8), List(6, 4, 7, 2, 1, 3, 9, 8), List(7, 2, 1, 3, 9, 8), List(8), List(9, 8), List(10, 6, 4, 7, 2, 1, 3, 9, 8))))
 listAtomicReference.get()
-// res4: List[Int] = List(10, 4, 9, 6, 3, 2, 7, 8, 5, 1)
+// res4: List[Int] = List(5, 10, 6, 4, 7, 2, 1, 3, 9, 8)
 listAtomicReference.get().size
 // res5: Int = 10
 ```
@@ -123,7 +124,7 @@ import cats.implicits._
 import cats.effect._
 
 implicit val contextShift: ContextShift[IO] = IO.contextShift(global)
-// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@610a1def
+// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@56c56056
 
 val program = for {
   ref <- Ref.of[IO,List[Int]](List.empty[Int])
@@ -133,7 +134,7 @@ val program = for {
   l <- ref.get
 }  yield l
 // program: IO[List[Int]] = Bind(
-//   Delay(cats.effect.concurrent.Ref$$$Lambda$5764/1231767792@6d7379c4),
+//   Delay(cats.effect.concurrent.Ref$$$Lambda$5800/1856241681@6f86381d),
 //   <function1>
 // )
 ```
@@ -142,7 +143,7 @@ That defines a functional program, with no side effects, so far.
 Now lets call a side-effecting unsafe method to calculate the result
 ```scala
 val resultList = program.unsafeRunSync()
-// resultList: List[Int] = List(7, 8, 2, 10, 9, 6, 5, 3, 4, 1)
+// resultList: List[Int] = List(10, 3, 9, 5, 4, 8, 7, 6, 2, 1)
 resultList.size
 // res6: Int = 10
 ```
@@ -180,12 +181,12 @@ val deferredExample = for {
   l <- d.get
 }  yield l
 // deferredExample: IO[List[Int]] = Bind(
-//   Delay(cats.effect.concurrent.Deferred$$$Lambda$5781/2141542064@61c61f42),
+//   Delay(cats.effect.concurrent.Deferred$$$Lambda$5817/1822491826@6ac6168e),
 //   <function1>
 // )
 
 deferredExample.unsafeRunSync()
-// res7: List[Int] = List(10, 4, 9, 8, 2, 7, 6, 5, 3, 1)
+// res7: List[Int] = List(8, 4, 5, 7, 6, 3, 2, 1)
 ```
 This successfully returns a non-deterministic result.
 

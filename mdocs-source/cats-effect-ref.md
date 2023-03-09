@@ -60,10 +60,11 @@ last read.
 This could be implemented with locks or synchronised blocks, but in fact uses a single check and set instruction, which
 has better performance.
 
-The basic operation of `AtomicReference` is `compareAndSet(expect:V, update:):Boolean`.
-This method a value to set and an expected existing value.
+The basic operation of `AtomicReference` is `public final boolean compareAndSet(V expect, V update) `.
+This method takes a value to set and an expected existing value.
 It sets the reference to hold the `update` value if and only if the reference currently hold the `expect` value.
 It returns true if the update succeeded.
+
 This is usually executed in a while loop.
 The implementation of `updateAndGet` that we use below is as follows
 ```java
