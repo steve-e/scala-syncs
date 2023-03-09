@@ -32,12 +32,12 @@ val bad = Future.traverse(ints){i => Future {
 Await.ready(bad, 10.seconds)
 // res0: Future[List[Unit]] = Future(Success(List((), (), (), (), (), (), (), (), (), ())))
 l
-// res1: List[Int] = List(8, 10, 9, 5, 3, 1)
+// res1: List[Int] = List(8, 9, 7, 4, 10, 3, 2, 1)
 l.size
-// res2: Int = 6
+// res2: Int = 8
 ```
 
-The program is non-deterministic, but it ususally preduces a list with less than 10 elements even though the list was
+The program is non-deterministic, but it usually produces a list with less than 10 elements even though the list was
 appended 10 times.
 This problem is called a "lost update". 
 It happens because more than one thread gets the list at the same time.
@@ -66,7 +66,24 @@ last read.
 This could be implemented with locks or synchronised blocks, but in fact uses a single check and set instruction, which
 has better performance.
 
-The following re-writes the program to use an `AtomicReference` to the list.
+The basic operation of `AtomicReference` is `compareAndSet(expect:V, update:):Boolean`.
+This method a value to set and an expected existing value.
+It sets the reference to hold the `update` value if and only if the reference currently hold the `expect` value.
+It returns true if the update succeeded.
+This is usually executed in a while loop.
+The implementation of `updateAndGet` that we use below is as follows
+```java
+    public final V updateAndGet(UnaryOperator<V> updateFunction) {
+        V prev, next;
+        do {
+            prev = get();
+            next = updateFunction.apply(prev);
+        } while (!compareAndSet(prev, next));
+        return next;
+    }
+```
+
+The following re-writes the first program to use an `AtomicReference` to the list.
 
 ```scala
 import java.util.concurrent.atomic.AtomicReference
@@ -80,11 +97,11 @@ val f = Future.traverse(ints){i => Future {
       i :: list
     })
   }}
-// f: Future[List[List[Int]]] = Future(Success(List(List(1), List(2, 5, 6, 7, 4, 3, 10, 9, 1), List(3, 10, 9, 1), List(4, 3, 10, 9, 1), List(5, 6, 7, 4, 3, 10, 9, 1), List(6, 7, 4, 3, 10, 9, 1), List(7, 4, 3, 10, 9, 1), List(8, 2, 5, 6, 7, 4, 3, 10, 9, 1), List(9, 1), List(10, 9, 1))))
+// f: Future[List[List[Int]]] = Future(Success(List(List(1), List(2, 7, 8, 5, 1), List(3, 2, 7, 8, 5, 1), List(4, 9, 6, 3, 2, 7, 8, 5, 1), List(5, 1), List(6, 3, 2, 7, 8, 5, 1), List(7, 8, 5, 1), List(8, 5, 1), List(9, 6, 3, 2, 7, 8, 5, 1), List(10, 4, 9, 6, 3, 2, 7, 8, 5, 1))))
 Await.ready(f, 110.seconds)
-// res3: Future[List[List[Int]]] = Future(Success(List(List(1), List(2, 5, 6, 7, 4, 3, 10, 9, 1), List(3, 10, 9, 1), List(4, 3, 10, 9, 1), List(5, 6, 7, 4, 3, 10, 9, 1), List(6, 7, 4, 3, 10, 9, 1), List(7, 4, 3, 10, 9, 1), List(8, 2, 5, 6, 7, 4, 3, 10, 9, 1), List(9, 1), List(10, 9, 1))))
+// res3: Future[List[List[Int]]] = Future(Success(List(List(1), List(2, 7, 8, 5, 1), List(3, 2, 7, 8, 5, 1), List(4, 9, 6, 3, 2, 7, 8, 5, 1), List(5, 1), List(6, 3, 2, 7, 8, 5, 1), List(7, 8, 5, 1), List(8, 5, 1), List(9, 6, 3, 2, 7, 8, 5, 1), List(10, 4, 9, 6, 3, 2, 7, 8, 5, 1))))
 listAtomicReference.get()
-// res4: List[Int] = List(8, 2, 5, 6, 7, 4, 3, 10, 9, 1)
+// res4: List[Int] = List(10, 4, 9, 6, 3, 2, 7, 8, 5, 1)
 listAtomicReference.get().size
 // res5: Int = 10
 ```
@@ -106,7 +123,7 @@ import cats.implicits._
 import cats.effect._
 
 implicit val contextShift: ContextShift[IO] = IO.contextShift(global)
-// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@157f1313
+// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@610a1def
 
 val program = for {
   ref <- Ref.of[IO,List[Int]](List.empty[Int])
@@ -116,7 +133,7 @@ val program = for {
   l <- ref.get
 }  yield l
 // program: IO[List[Int]] = Bind(
-//   Delay(cats.effect.concurrent.Ref$$$Lambda$5772/218084821@12994df),
+//   Delay(cats.effect.concurrent.Ref$$$Lambda$5764/1231767792@6d7379c4),
 //   <function1>
 // )
 ```
@@ -125,8 +142,50 @@ That defines a functional program, with no side effects, so far.
 Now lets call a side-effecting unsafe method to calculate the result
 ```scala
 val resultList = program.unsafeRunSync()
-// resultList: List[Int] = List(10, 6, 9, 8, 5, 7, 4, 3, 2, 1)
+// resultList: List[Int] = List(7, 8, 2, 10, 9, 6, 5, 3, 4, 1)
 resultList.size
 // res6: Int = 10
 ```
 This works as expected
+
+## Deferred
+
+Cats effect includes another type for safely setting a value in a concurrent context.
+This type is `Deferred` which is created without a value and can be set only once,
+by calling `complete`.
+If `complete` is called more than once it produces a failed `F[_]`.
+The value can be retrieved by calling `get`.
+
+`Deferred` can be thought of as a functional version of `Promise`
+
+This code calls `complete` after each update of the `Ref`.
+As most of these calls will fail, we recover by calling `attempt` which converts to an `IO` of `Either` with the failure as a `Left`.
+We don't care at this point whether it is a success or not so we ignore the result using `void`.
+```scala
+import cats.effect.concurrent.Deferred
+
+def updateAndComplete(i:Int,
+                       d: Deferred[IO,List[Int]],
+                       ref : Ref[IO,List[Int]]
+                     ):IO[Unit] = {
+  ref.updateAndGet(l => i::l)
+    .flatMap(l => d.complete(l).attempt.void)  
+
+}
+
+val deferredExample = for {
+  d <- Deferred[IO,List[Int]]
+  ref <- Ref.of[IO,List[Int]](List.empty[Int])
+  _ <- ints.parTraverse(updateAndComplete(_,d,ref))
+  l <- d.get
+}  yield l
+// deferredExample: IO[List[Int]] = Bind(
+//   Delay(cats.effect.concurrent.Deferred$$$Lambda$5781/2141542064@61c61f42),
+//   <function1>
+// )
+
+deferredExample.unsafeRunSync()
+// res7: List[Int] = List(10, 4, 9, 8, 2, 7, 6, 5, 3, 1)
+```
+This successfully returns a non-deterministic result.
+

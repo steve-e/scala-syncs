@@ -31,7 +31,7 @@ l
 l.size
 ```
 
-The program is non-deterministic, but it ususally preduces a list with less than 10 elements even though the list was
+The program is non-deterministic, but it usually produces a list with less than 10 elements even though the list was
 appended 10 times.
 This problem is called a "lost update". 
 It happens because more than one thread gets the list at the same time.
@@ -60,7 +60,24 @@ last read.
 This could be implemented with locks or synchronised blocks, but in fact uses a single check and set instruction, which
 has better performance.
 
-The following re-writes the program to use an `AtomicReference` to the list.
+The basic operation of `AtomicReference` is `compareAndSet(expect:V, update:):Boolean`.
+This method a value to set and an expected existing value.
+It sets the reference to hold the `update` value if and only if the reference currently hold the `expect` value.
+It returns true if the update succeeded.
+This is usually executed in a while loop.
+The implementation of `updateAndGet` that we use below is as follows
+```java
+    public final V updateAndGet(UnaryOperator<V> updateFunction) {
+        V prev, next;
+        do {
+            prev = get();
+            next = updateFunction.apply(prev);
+        } while (!compareAndSet(prev, next));
+        return next;
+    }
+```
+
+The following re-writes the first program to use an `AtomicReference` to the list.
 
 ```scala mdoc:silent
 import java.util.concurrent.atomic.AtomicReference
@@ -113,3 +130,41 @@ val resultList = program.unsafeRunSync()
 resultList.size
 ```
 This works as expected
+
+## Deferred
+
+Cats effect includes another type for safely setting a value in a concurrent context.
+This type is `Deferred` which is created without a value and can be set only once,
+by calling `complete`.
+If `complete` is called more than once it produces a failed `F[_]`.
+The value can be retrieved by calling `get`.
+
+`Deferred` can be thought of as a functional version of `Promise`
+
+This code calls `complete` after each update of the `Ref`.
+As most of these calls will fail, we recover by calling `attempt` which converts to an `IO` of `Either` with the failure as a `Left`.
+We don't care at this point whether it is a success or not so we ignore the result using `void`.
+```scala mdoc
+import cats.effect.concurrent.Deferred
+
+def updateAndComplete(i:Int,
+                       d: Deferred[IO,List[Int]],
+                       ref : Ref[IO,List[Int]]
+                     ):IO[Unit] = {
+  ref.updateAndGet(l => i::l)
+    .flatMap(l => d.complete(l).attempt.void)  
+
+}
+
+val deferredExample = for {
+  d <- Deferred[IO,List[Int]]
+  ref <- Ref.of[IO,List[Int]](List.empty[Int])
+  _ <- ints.parTraverse(updateAndComplete(_,d,ref))
+  l <- d.get
+}  yield l
+
+deferredExample.unsafeRunSync()
+
+```
+This successfully returns a non-deterministic result.
+
