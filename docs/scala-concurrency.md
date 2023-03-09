@@ -92,9 +92,9 @@ Await.ready(f1, 3.second)
 Await.ready(f2, 4.second)
 // res3: Future[Unit] = Future(Success(()))
 println(a)
-// init a updated in f2 updated in f1
+// init a updated in f2
 println(b)
-// init b updated in f2 updated in f1
+// init b updated in f1 updated in f2
 ```
 This program is non-deterministic, but it has several times printed
 1. init a updated in f2
@@ -129,7 +129,7 @@ import scala.concurrent.duration.DurationInt
 import java.util.concurrent.CountDownLatch
 
 val latch = new CountDownLatch(2)
-// latch: CountDownLatch = java.util.concurrent.CountDownLatch@18cb656a[Count = 0]
+// latch: CountDownLatch = java.util.concurrent.CountDownLatch@293eb843[Count = 0]
 
 val future = Future {
  println("Waiting on latch")
@@ -236,7 +236,7 @@ Future {
   }
   println("future  released LockB")
 }
-// res20: Future[Unit] = Future(Success(()))
+// res20: Future[Unit] = Future(Failure(java.util.concurrent.TimeoutException: Futures timed out after [5 seconds]))
 
 println("Future created")
 // Future created
@@ -251,11 +251,13 @@ LockA.synchronized{
   print("main released LockB")
 
 }
+// future synchronized on LockB
+// future synchronized on LockA
+// failed [Futures timed out after [5 seconds]]
 // main synchronized on LockA
 // main synchronized on LockB
-// main released LockBfuture synchronized on LockB
+// main released LockB
 println("main released LockA")
-// future synchronized on LockA
 // main released LockA
 ```
 ## Mentions of higher level facilities

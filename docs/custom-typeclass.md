@@ -35,7 +35,7 @@ implicit val addition = new HandMadeMonoid[Int]{
     val empty = 0
     def combine(x:Int, y:Int):Int = x + y
 }
-// addition: AnyRef with HandMadeMonoid[Int]{val empty: Int} = repl.MdocSession$MdocApp$$anon$1@3d9823fd
+// addition: AnyRef with HandMadeMonoid[Int]{val empty: Int} = repl.MdocSession$MdocApp$$anon$1@2516fa07
 ```
 
 We then want to be able use them in an API
@@ -130,7 +130,7 @@ implicit val Additive: AnnotatedMonoid[Int] = new AnnotatedMonoid[Int] {
     val empty = 0
     def combine(x: Int, y: Int): Int = x + y
 }
-// Additive: AnnotatedMonoid[Int] = repl.MdocSession$MdocApp$$anon$3@103953ae
+// Additive: AnnotatedMonoid[Int] = repl.MdocSession$MdocApp$$anon$3@5093ac3
 ```
 
 The type class and instance can then be used as expected.
@@ -151,7 +151,7 @@ import AnnotatedMonoid.ops._
 2 combine 3
 // res6: Int = 5
 
-1 |*| 2
+1 |+| 2
 // res7: Int = 3
 ```
 and use our monoid in APIs
@@ -168,7 +168,7 @@ implicit val muliplicative = new AnnotatedMonoid[Double] {
     val empty = 1.0
     def combine(x: Double, y: Double): Double = x * y
 }
-// muliplicative: AnyRef with AnnotatedMonoid[Double]{val empty: Double} = repl.MdocSession$MdocApp$$anon$4@71eb952c
+// muliplicative: AnyRef with AnnotatedMonoid[Double]{val empty: Double} = repl.MdocSession$MdocApp$$anon$4@b662b76
 
 combineWithAM(List(2.0, 3.0, 4.0))
 // res9: Double = 24.0
@@ -177,7 +177,7 @@ combineWithAM(List(2.0, 3.0, 4.0))
 We can see the implicit conversion happening if we really want to.
 ```scala
 val ops1: AnnotatedMonoid.Ops[Int] = 1
-// ops1: AnnotatedMonoid.Ops[Int] = syncs.typeclasses.AnnotatedMonoid$ops$$anon$1@58d6fc6c
+// ops1: AnnotatedMonoid.Ops[Int] = syncs.typeclasses.AnnotatedMonoid$ops$$anon$1@733a6d85
 ops1.combine(2)
 // res10: Int = 3
 ops1.|+|(3)
@@ -201,7 +201,8 @@ object AnnotatedMonoid {
   trait Ops[A] {
     def typeClassInstance: AnnotatedMonoid[A]
     def self: A
-    def |+|(y: A): A = typeClassInstance.combine(self, y)
+    def combine(y: A): A = typeClassInstance.combine(self, y)
+    def |+|(y: A): A = combine(y)
   }
 
   trait ToAnnotatedMonoidOps {

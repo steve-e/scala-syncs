@@ -17,25 +17,25 @@ import cats.implicits._
 import scala.concurrent.ExecutionContext
 
 implicit val contextShift: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
-// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@2eb649d6
+// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@45f67764
 
 val io1 = IO{Thread.sleep(1000)} >> IO(println("slept"))
 // io1: IO[Unit] = Bind(
 //   Delay(<function0>),
-//   cats.syntax.FlatMapOps$$$Lambda$6015/1022829568@2a764463
+//   cats.syntax.FlatMapOps$$$Lambda$6561/220728228@f36eba8
 // )
 val io2 = IO{Thread.sleep(1000)} >> IO(println("slept again"))
 // io2: IO[Unit] = Bind(
 //   Delay(<function0>),
-//   cats.syntax.FlatMapOps$$$Lambda$6015/1022829568@3cb8ce7c
+//   cats.syntax.FlatMapOps$$$Lambda$6561/220728228@7cb78b63
 // )
 val program = (io1 *> io2)
 // program: IO[Unit] = Bind(
 //   Bind(
 //     Delay(<function0>),
-//     cats.syntax.FlatMapOps$$$Lambda$6015/1022829568@2a764463
+//     cats.syntax.FlatMapOps$$$Lambda$6561/220728228@f36eba8
 //   ),
-//   cats.FlatMap$$Lambda$6016/1359412767@5794e58
+//   cats.FlatMap$$Lambda$6600/1898163714@456e1037
 // )
 
 program.unsafeRunSync()
@@ -89,17 +89,17 @@ val printer:String => IO[Unit] = i => IO(println(s"Evaluating: $i"))
 val left = IO.pure("left").flatTap(printer)
 // left: IO[String] = Bind(
 //   Pure("left"),
-//   cats.FlatMap$$Lambda$6021/1460079866@7395935f
+//   cats.FlatMap$$Lambda$7149/1121342855@335512a9
 // )
 val right = IO.pure("right").flatTap(printer)
 // right: IO[String] = Bind(
 //   Pure("right"),
-//   cats.FlatMap$$Lambda$6021/1460079866@39534050
+//   cats.FlatMap$$Lambda$7149/1121342855@b86c4c0
 // )
 val pr = left *> right
 // pr: IO[String] = Bind(
-//   Bind(Pure("left"), cats.FlatMap$$Lambda$6021/1460079866@7395935f),
-//   cats.FlatMap$$Lambda$6016/1359412767@38684b5
+//   Bind(Pure("left"), cats.FlatMap$$Lambda$7149/1121342855@335512a9),
+//   cats.FlatMap$$Lambda$6600/1898163714@4baaba40
 // )
 pr.unsafeRunSync()
 // Evaluating: left
@@ -120,17 +120,17 @@ val printer2:IO[Unit] = IO.pure(println(s"Evaluating: .."))
 val left2 = IO.pure("left").flatTap(_ => printer2)
 // left2: IO[String] = Bind(
 //   Pure("left"),
-//   cats.FlatMap$$Lambda$6021/1460079866@4c421113
+//   cats.FlatMap$$Lambda$7149/1121342855@7ef0e4aa
 // )
 val right2 = IO.pure("right").flatTap(_ => printer2)
 // right2: IO[String] = Bind(
 //   Pure("right"),
-//   cats.FlatMap$$Lambda$6021/1460079866@13127caf
+//   cats.FlatMap$$Lambda$7149/1121342855@652b7187
 // )
 val pr2 = left2 *> right2
 // pr2: IO[String] = Bind(
-//   Bind(Pure("left"), cats.FlatMap$$Lambda$6021/1460079866@4c421113),
-//   cats.FlatMap$$Lambda$6016/1359412767@3060ef5d
+//   Bind(Pure("left"), cats.FlatMap$$Lambda$7149/1121342855@7ef0e4aa),
+//   cats.FlatMap$$Lambda$6600/1898163714@58b61926
 // )
 pr2.unsafeRunSync()
 // res11: String = "right"
@@ -187,7 +187,7 @@ val listOfIO:List[IO[Unit]] = inputs.map(process)
 val ioOfList:IO[List[Unit]] = listOfIO.sequence  
 // ioOfList: IO[List[Unit]] = Bind(
 //   Delay(<function0>),
-//   cats.FlatMap$$Lambda$6037/778149422@77466c8
+//   cats.FlatMap$$Lambda$6603/661068284@4650d0ca
 // )  
 
 ioOfList.unsafeRunSync()
@@ -204,7 +204,7 @@ This is more efficient as the list is traversed only once.
 val runner = inputs.traverse(process)
 // runner: IO[List[Unit]] = Bind(
 //   Delay(<function0>),
-//   cats.FlatMap$$Lambda$6037/778149422@5be235bc
+//   cats.FlatMap$$Lambda$6603/661068284@3f7ca91e
 // )
 runner.unsafeRunSync()
 // Processing: [Foo]
@@ -221,9 +221,9 @@ We also need to know that our effects do not need to happen in order.
 val parallel = inputs.parTraverse(process)
 // parallel: IO[List[Unit]] = Async(<function2>, true)
 parallel.unsafeRunSync()
-// Processing: [BAZ]
-// Processing: [bar]
 // Processing: [Foo]
+// Processing: [bar]
+// Processing: [BAZ]
 // res16: List[Unit] = List((), (), ())
 ```
 
@@ -240,10 +240,10 @@ One way is to use `List.map`, then `List.fold`, with `>>` as the combiner functi
 val all = inputs.map(process).fold(IO.unit)(_ >> _)
 // all: IO[Unit] = Bind(
 //   Bind(
-//     Bind(Pure(()), cats.syntax.FlatMapOps$$$Lambda$6015/1022829568@5b95dd6b),
-//     cats.syntax.FlatMapOps$$$Lambda$6015/1022829568@6cb8cb43
+//     Bind(Pure(()), cats.syntax.FlatMapOps$$$Lambda$6561/220728228@1e5403f),
+//     cats.syntax.FlatMapOps$$$Lambda$6561/220728228@6972160c
 //   ),
-//   cats.syntax.FlatMapOps$$$Lambda$6015/1022829568@48dea23a
+//   cats.syntax.FlatMapOps$$$Lambda$6561/220728228@29e45d68
 // )
 all.unsafeRunSync()
 // Processing: [Foo]
@@ -256,8 +256,8 @@ This makes use of an implicitly available for `Monoid[IO]`
 ```scala
 val k = inputs.foldMapM(process)
 // k: IO[Unit] = Bind(
-//   Map(Delay(<function0>), scala.Function1$$Lambda$613/880728495@25b3148, 1),
-//   cats.StackSafeMonad$$Lambda$6059/1636529446@77d0daed
+//   Map(Delay(<function0>), scala.Function1$$Lambda$622/1079821589@730a2513, 1),
+//   cats.StackSafeMonad$$Lambda$7173/342610417@58c577f5
 // )
 k.unsafeRunSync()
 // Processing: [Foo]
@@ -284,7 +284,7 @@ val addition = new Monoid[Int] {
                    val empty = 0
                    def combine(a:Int, b:Int):Int = a + b 
                 }
-// addition: AnyRef with Monoid[Int]{val empty: Int} = repl.MdocSession$MdocApp$$anon$1@5d98e587
+// addition: AnyRef with Monoid[Int]{val empty: Int} = repl.MdocSession$MdocApp$$anon$1@217ec897
 
 ints.combineAll(addition)
 // res19: Int = 15
@@ -312,7 +312,7 @@ val multiplication = new Monoid[Int] {
                    val empty = 1
                    def combine(a:Int, b:Int):Int = a * b 
                 }
-// multiplication: AnyRef with Monoid[Int]{val empty: Int} = repl.MdocSession$MdocApp$$anon$2@60ea437c
+// multiplication: AnyRef with Monoid[Int]{val empty: Int} = repl.MdocSession$MdocApp$$anon$2@2afadecd
 
 ints.combineAll(multiplication)
 // res21: Int = 120

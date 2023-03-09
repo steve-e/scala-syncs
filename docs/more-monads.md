@@ -119,13 +119,11 @@ object ApiFuture extends Api[Future] {
 We can use this with our program
 ```scala
 program(ApiFuture)("a")
-// getting a
 // res9: Future[String] = Future(Success(repeatrepeat))
 program(ApiFuture)("b")
+// getting a
 // res10: Future[String] = Future(Failure(java.lang.Exception: Can't repeat negatively))
 program(ApiFuture)("c")
-// getting b
-// getting c
 // res11: Future[String] = Future(Failure(java.util.NoSuchElementException: key not found: c))
 ```
 but calling toString on the Future does not await or complete it.
@@ -137,6 +135,8 @@ Let's try again
 ```scala
 import scala.concurrent.duration._
 val timeout = 2.seconds
+// getting b
+// getting c
 // timeout: FiniteDuration = 2 seconds
 
 Await.result(program(ApiFuture)("a"), timeout)
@@ -236,11 +236,11 @@ object ApiEval extends Api[Eval] {
 We can use this with our program
 ```scala
 program(ApiEval)("a")
-// res13: Eval[String] = cats.Eval$$anon$4@4ba2bcfb
+// res13: Eval[String] = cats.Eval$$anon$4@57bf85a0
 program(ApiEval)("b")
-// res14: Eval[String] = cats.Eval$$anon$4@56aa7af9
+// res14: Eval[String] = cats.Eval$$anon$4@64506425
 program(ApiEval)("c")
-// res15: Eval[String] = cats.Eval$$anon$4@3b036ee1
+// res15: Eval[String] = cats.Eval$$anon$4@6b7cc80e
 ```
 Nothing is evaluated here. 
 The program creates an Eval that we still need to evaluate.
@@ -288,7 +288,7 @@ By wrapping ApiFuture with IO we can make it a little better behaved
 import cats.effect._
 
 implicit val contextShift: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
-// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@eb3a638
+// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@50a12935
   
 object ApiIO extends Api[IO] {
     def get(key:String):IO[Int] = IO.fromFuture(IO(ApiFuture.get(key)))
@@ -301,26 +301,17 @@ We can use this with our program
 ```scala
 program(ApiIO)("a")
 // res17: IO[String] = Bind(
-//   Async(
-//     cats.effect.internals.IOBracket$$$Lambda$6108/1073815416@2ee7a569,
-//     false
-//   ),
+//   Async(cats.effect.internals.IOBracket$$$Lambda$6591/100610796@5d10a797, false),
 //   <function1>
 // )
 program(ApiIO)("b")
 // res18: IO[String] = Bind(
-//   Async(
-//     cats.effect.internals.IOBracket$$$Lambda$6108/1073815416@797942a1,
-//     false
-//   ),
+//   Async(cats.effect.internals.IOBracket$$$Lambda$6591/100610796@3142f44d, false),
 //   <function1>
 // )
 program(ApiIO)("c")
 // res19: IO[String] = Bind(
-//   Async(
-//     cats.effect.internals.IOBracket$$$Lambda$6108/1073815416@29a27eac,
-//     false
-//   ),
+//   Async(cats.effect.internals.IOBracket$$$Lambda$6591/100610796@3eef828d, false),
 //   <function1>
 // )
 ```
