@@ -3,7 +3,7 @@
 We have looked at scala concurrency and also cats effect several times including Fiber.
 This time we will look at some advanced concurrency features in cats-effect 2.1.2.
 Note that cats-effect is currently at 3.4.8 but Apache Spark 3.2.0 forces us to use a lower version.
-The later versions of cats-effect include more concurrecny features
+Later versions of cats-effect include more concurrency features
 
 ## Concurrent updates
 
@@ -32,7 +32,7 @@ val bad = Future.traverse(ints){i => Future {
 Await.ready(bad, 10.seconds)
 // res0: Future[List[Unit]] = Future(Success(List((), (), (), (), (), (), (), (), (), ())))
 l
-// res1: List[Int] = List(7, 6, 8, 9, 5, 4, 2, 1)
+// res1: List[Int] = List(10, 7, 3, 4, 9, 5, 2, 1)
 l.size
 // res2: Int = 8
 ```
@@ -84,7 +84,7 @@ The implementation of `updateAndGet` that we use below is as follows
     }
 ```
 
-The following re-writes the first program to use an `AtomicReference` to the list.
+The following code re-writes the first program to use an `AtomicReference` to the update list.
 
 ```scala
 import java.util.concurrent.atomic.AtomicReference
@@ -98,11 +98,11 @@ val f = Future.traverse(ints){i => Future {
       i :: list
     })
   }}
-// f: Future[List[List[Int]]] = Future(Success(List(List(1, 3, 9, 8), List(2, 1, 3, 9, 8), List(3, 9, 8), List(4, 7, 2, 1, 3, 9, 8), List(5, 10, 6, 4, 7, 2, 1, 3, 9, 8), List(6, 4, 7, 2, 1, 3, 9, 8), List(7, 2, 1, 3, 9, 8), List(8), List(9, 8), List(10, 6, 4, 7, 2, 1, 3, 9, 8))))
+// f: Future[List[List[Int]]] = Future(Success(List(List(1, 10), List(2, 4, 3, 6, 1, 10), List(3, 6, 1, 10), List(4, 3, 6, 1, 10), List(5, 9, 2, 4, 3, 6, 1, 10), List(6, 1, 10), List(7, 5, 9, 2, 4, 3, 6, 1, 10), List(8, 7, 5, 9, 2, 4, 3, 6, 1, 10), List(9, 2, 4, 3, 6, 1, 10), List(10))))
 Await.ready(f, 110.seconds)
-// res3: Future[List[List[Int]]] = Future(Success(List(List(1, 3, 9, 8), List(2, 1, 3, 9, 8), List(3, 9, 8), List(4, 7, 2, 1, 3, 9, 8), List(5, 10, 6, 4, 7, 2, 1, 3, 9, 8), List(6, 4, 7, 2, 1, 3, 9, 8), List(7, 2, 1, 3, 9, 8), List(8), List(9, 8), List(10, 6, 4, 7, 2, 1, 3, 9, 8))))
+// res3: Future[List[List[Int]]] = Future(Success(List(List(1, 10), List(2, 4, 3, 6, 1, 10), List(3, 6, 1, 10), List(4, 3, 6, 1, 10), List(5, 9, 2, 4, 3, 6, 1, 10), List(6, 1, 10), List(7, 5, 9, 2, 4, 3, 6, 1, 10), List(8, 7, 5, 9, 2, 4, 3, 6, 1, 10), List(9, 2, 4, 3, 6, 1, 10), List(10))))
 listAtomicReference.get()
-// res4: List[Int] = List(5, 10, 6, 4, 7, 2, 1, 3, 9, 8)
+// res4: List[Int] = List(8, 7, 5, 9, 2, 4, 3, 6, 1, 10)
 listAtomicReference.get().size
 // res5: Int = 10
 ```
@@ -124,7 +124,7 @@ import cats.implicits._
 import cats.effect._
 
 implicit val contextShift: ContextShift[IO] = IO.contextShift(global)
-// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@56c56056
+// contextShift: ContextShift[IO] = cats.effect.internals.IOContextShift@b03d64e
 
 val program = for {
   ref <- Ref.of[IO,List[Int]](List.empty[Int])
@@ -134,7 +134,7 @@ val program = for {
   l <- ref.get
 }  yield l
 // program: IO[List[Int]] = Bind(
-//   Delay(cats.effect.concurrent.Ref$$$Lambda$5800/1856241681@6f86381d),
+//   Delay(cats.effect.concurrent.Ref$$$Lambda$5877/1498996892@48ad8542),
 //   <function1>
 // )
 ```
@@ -143,7 +143,7 @@ That defines a functional program, with no side effects, so far.
 Now lets call a side-effecting unsafe method to calculate the result
 ```scala
 val resultList = program.unsafeRunSync()
-// resultList: List[Int] = List(10, 3, 9, 5, 4, 8, 7, 6, 2, 1)
+// resultList: List[Int] = List(9, 6, 4, 10, 7, 8, 5, 2, 3, 1)
 resultList.size
 // res6: Int = 10
 ```
@@ -165,6 +165,7 @@ We don't care at this point whether it is a success or not so we ignore the resu
 ```scala
 import cats.effect.concurrent.Deferred
 
+case class Results(fromRef:List[Int], fromDeferred:List[Int])
 def updateAndComplete(i:Int,
                        d: Deferred[IO,List[Int]],
                        ref : Ref[IO,List[Int]]
@@ -178,15 +179,20 @@ val deferredExample = for {
   d <- Deferred[IO,List[Int]]
   ref <- Ref.of[IO,List[Int]](List.empty[Int])
   _ <- ints.parTraverse(updateAndComplete(_,d,ref))
-  l <- d.get
-}  yield l
-// deferredExample: IO[List[Int]] = Bind(
-//   Delay(cats.effect.concurrent.Deferred$$$Lambda$5817/1822491826@6ac6168e),
+  refList <- ref.get
+  deferredList <- d.get
+}  yield Results(refList, deferredList)
+// deferredExample: IO[Results] = Bind(
+//   Delay(cats.effect.concurrent.Deferred$$$Lambda$5894/1010412881@685f7734),
 //   <function1>
 // )
 
 deferredExample.unsafeRunSync()
-// res7: List[Int] = List(8, 4, 5, 7, 6, 3, 2, 1)
+// res7: Results = Results(
+//   List(10, 9, 7, 8, 6, 5, 4, 3, 2, 1),
+//   List(6, 5, 4, 3, 2, 1)
+// )
 ```
-This successfully returns a non-deterministic result.
+This successfully returns the first list set after some concurrent updates as deferredList. 
+This is a non-deterministic result.
 

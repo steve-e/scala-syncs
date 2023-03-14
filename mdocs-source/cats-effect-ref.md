@@ -3,7 +3,7 @@
 We have looked at scala concurrency and also cats effect several times including Fiber.
 This time we will look at some advanced concurrency features in cats-effect 2.1.2.
 Note that cats-effect is currently at 3.4.8 but Apache Spark 3.2.0 forces us to use a lower version.
-The later versions of cats-effect include more concurrecny features
+Later versions of cats-effect include more concurrency features
 
 ## Concurrent updates
 
@@ -78,7 +78,7 @@ The implementation of `updateAndGet` that we use below is as follows
     }
 ```
 
-The following re-writes the first program to use an `AtomicReference` to the list.
+The following code re-writes the first program to use an `AtomicReference` to the update list.
 
 ```scala mdoc:silent
 import java.util.concurrent.atomic.AtomicReference
@@ -148,6 +148,7 @@ We don't care at this point whether it is a success or not so we ignore the resu
 ```scala mdoc
 import cats.effect.concurrent.Deferred
 
+case class Results(fromRef:List[Int], fromDeferred:List[Int])
 def updateAndComplete(i:Int,
                        d: Deferred[IO,List[Int]],
                        ref : Ref[IO,List[Int]]
@@ -161,11 +162,13 @@ val deferredExample = for {
   d <- Deferred[IO,List[Int]]
   ref <- Ref.of[IO,List[Int]](List.empty[Int])
   _ <- ints.parTraverse(updateAndComplete(_,d,ref))
-  l <- d.get
-}  yield l
+  refList <- ref.get
+  deferredList <- d.get
+}  yield Results(refList, deferredList)
 
 deferredExample.unsafeRunSync()
 
 ```
-This successfully returns a non-deterministic result.
+This successfully returns the first list set after some concurrent updates as deferredList. 
+This is a non-deterministic result.
 
