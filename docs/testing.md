@@ -13,3 +13,4 @@ Examples
 - [Basic](/src/test/scala/syncs/testing/munit/MunitBasicExampleSpec.scala)
 - [Extended](/src/test/scala/syncs/testing/munit/MunitExtendedExampleSpec.scala)
 - [Futures](/src/test/scala/syncs/testing/munit/MunitFuturesExampleSpec.scala)
+- [Cats Effect IO](/src/test/scala/syncs/testing/munit/MunitCatsEffectExampleSpec.scala)

@@ -30,7 +30,8 @@ lazy val root = (project in file("."))
       "org.typelevel" %% "cats-effect" % "2.1.2",
       "org.typelevel" %% "simulacrum" % "1.0.1",
       "org.scalatest" %% "scalatest" % "3.2.9",
-      "org.scalameta" %% "munit" % "0.7.29"
+      "org.scalameta" %% "munit" % "0.7.29",
+      "org.typelevel" %% "munit-cats-effect-2" % "1.0.7"
     ),
    artifactorySettings
   )
