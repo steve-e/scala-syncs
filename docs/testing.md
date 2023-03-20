@@ -1,5 +1,16 @@
 # Testing
 
+## ScalaTest
+
+Mature library with
+- a choice of testing styles
+- a choice of DSLs
+
+Examples
+
+- [FlatSpec using asserts](/src/test/scala/syncs/testing/scalatest/ScalaTestFlatAssertsSpec.scala)
+- [FlatSpec using Matchers](/src/test/scala/syncs/testing/scalatest/ScalaTestFlatAssertsSpec.scala)
+
 
 ## Munit
 
