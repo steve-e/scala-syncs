@@ -24,12 +24,13 @@ addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.fu
 lazy val root = (project in file("."))
   .settings(
     name := "scala-syncs",
-    scalacOptions += "-Ypartial-unification",
+    scalacOptions ++= Seq("-Ypartial-unification", "-Yrangepos"),
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % "2.1.1",
       "org.typelevel" %% "cats-effect" % "2.1.2",
+      "org.typelevel" %% "simulacrum" % "1.0.1",
       "org.scalatest" %% "scalatest" % "3.2.9",
-      "org.typelevel" %% "simulacrum" % "1.0.1"
+      "org.scalameta" %% "munit" % "0.7.29"
     ),
    artifactorySettings
   )
