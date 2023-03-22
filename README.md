@@ -27,6 +27,7 @@ sbt docs/mdoc
 - Creating our [own custom type classes](docs/custom-typeclass.md)
 - Cats Effect: [Fibers and Errors](docs/cats-effect-fibers-and-errors.md)
 - [Validated and Applicative](docs/validated-and-applicative.md)
+- [Testing](docs/testing.md)
 
 ### Absolute basics on of Category theory
 - [What is a category](docs/category.md)

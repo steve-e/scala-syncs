@@ -24,6 +24,8 @@ Examples
 
 - [FlatSpec using asserts](/src/test/scala/syncs/testing/scalatest/ScalaTestFlatAssertsSpec.scala)
 - [FlatSpec using Matchers](/src/test/scala/syncs/testing/scalatest/ScalaTestFlatAssertsSpec.scala)
+- [FlatSpec testing IO](/src/test/scala/syncs/testing/scalatest/ScalaTestIOSpec.scala) 
+  Later versions of ScalaTest can have better integration with cats effect
 
 
 ### Munit
