@@ -35,7 +35,6 @@ implicit val addition = new HandMadeMonoid[Int]{
     val empty = 0
     def combine(x:Int, y:Int):Int = x + y
 }
-// addition: AnyRef with HandMadeMonoid[Int]{val empty: Int} = repl.MdocSession$MdocApp$$anon$1@2516fa07
 ```
 
 We then want to be able use them in an API
@@ -130,7 +129,6 @@ implicit val Additive: AnnotatedMonoid[Int] = new AnnotatedMonoid[Int] {
     val empty = 0
     def combine(x: Int, y: Int): Int = x + y
 }
-// Additive: AnnotatedMonoid[Int] = repl.MdocSession$MdocApp$$anon$3@5093ac3
 ```
 
 The type class and instance can then be used as expected.
@@ -163,13 +161,14 @@ def combineWithAM[A:AnnotatedMonoid](l:List[A]):A = {
 
 combineWithAM(List(2,3,4))
 // res8: Int = 9
-
+```
+```scala
 implicit val muliplicative = new AnnotatedMonoid[Double] {
     val empty = 1.0
     def combine(x: Double, y: Double): Double = x * y
 }
-// muliplicative: AnyRef with AnnotatedMonoid[Double]{val empty: Double} = repl.MdocSession$MdocApp$$anon$4@b662b76
-
+```
+```scala
 combineWithAM(List(2.0, 3.0, 4.0))
 // res9: Double = 24.0
 ```
@@ -177,7 +176,7 @@ combineWithAM(List(2.0, 3.0, 4.0))
 We can see the implicit conversion happening if we really want to.
 ```scala
 val ops1: AnnotatedMonoid.Ops[Int] = 1
-// ops1: AnnotatedMonoid.Ops[Int] = syncs.typeclasses.AnnotatedMonoid$ops$$anon$1@733a6d85
+// ops1: AnnotatedMonoid.Ops[Int] = syncs.typeclasses.AnnotatedMonoid$ops$$anon$1@5bced9c9
 ops1.combine(2)
 // res10: Int = 3
 ops1.|+|(3)

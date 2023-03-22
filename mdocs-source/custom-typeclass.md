@@ -30,7 +30,7 @@ trait HandMadeMonoid[A] {
 ```
 We want to be able to define instances
 
-```scala mdoc
+```scala mdoc:silent
 implicit val addition = new HandMadeMonoid[Int]{
     val empty = 0
     def combine(x:Int, y:Int):Int = x + y
@@ -113,7 +113,7 @@ That is what the definition looks like but the actual code is defined in Annotat
 
 The trait can then be used to define type class instances
 
-```scala mdoc
+```scala mdoc:silent
 import simulacrum._
 import syncs.typeclasses._
 
@@ -150,12 +150,14 @@ and use our monoid in APIs
  }
 
 combineWithAM(List(2,3,4))
-
+```
+```scala mdoc:silent
 implicit val muliplicative = new AnnotatedMonoid[Double] {
     val empty = 1.0
     def combine(x: Double, y: Double): Double = x * y
 }
-
+```
+```scala mdoc
 combineWithAM(List(2.0, 3.0, 4.0))
  
  
