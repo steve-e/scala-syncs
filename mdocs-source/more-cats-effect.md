@@ -11,7 +11,7 @@ Some we haven't looked at yet.
 `IO` also has an `Apply` instance. This provides syntax for
 `*>` which has a similar functionality to `>>` and is a synonym for `productR`.
 
-```scala mdoc
+```scala mdoc:silent
 import cats.effect._
 import cats.implicits._
 import scala.concurrent.ExecutionContext
@@ -21,7 +21,8 @@ implicit val contextShift: ContextShift[IO] = IO.contextShift(ExecutionContext.g
 val io1 = IO{Thread.sleep(1000)} >> IO(println("slept"))
 val io2 = IO{Thread.sleep(1000)} >> IO(println("slept again"))
 val program = (io1 *> io2)
-
+```
+```scala mdoc
 program.unsafeRunSync()
 
 ```
@@ -55,10 +56,13 @@ Both sides are evaluated, even if only the right is returned.
 In this example we are also using flatTap to add a side effecting function which has its result ignored
 ```scala mdoc
 val printer:String => IO[Unit] = i => IO(println(s"Evaluating: $i"))
-
+```
+```scala mdoc:silent
 val left = IO.pure("left").flatTap(printer)
 val right = IO.pure("right").flatTap(printer)
 val pr = left *> right
+```
+```scala mdoc
 pr.unsafeRunSync()
 ```
 WARNING. `IO.pure` should only be used for non-side-effecting values.
@@ -67,13 +71,14 @@ But it would be wrong to use it for `println` and would probably break your prog
 The `println` would not be suspended, and would immediately evaluate.
 The `IO` created would be identical to `IO.unit` or `IO.pure(())`
 Here is a broken example of using IO.pure
-```scala mdoc
-
+```scala mdoc:silent
 val printer2:IO[Unit] = IO.pure(println(s"Evaluating: .."))
 
 val left2 = IO.pure("left").flatTap(_ => printer2)
 val right2 = IO.pure("right").flatTap(_ => printer2)
 val pr2 = left2 *> right2
+```
+```scala mdoc
 pr2.unsafeRunSync()
 ```
 This example prints "Evaluating ..." before the program is evaluated.
@@ -110,22 +115,25 @@ def process(input:String):IO[Unit] = IO{
     }
 
 val inputs:List[String] = List("Foo", "bar", "BAZ")
-
+```
+```scala mdoc:silent
 val listOfIO:List[IO[Unit]] = inputs.map(process)
 
 // It is difficult to evaluate a List of IO, so lets flip the type order
 
 val ioOfList:IO[List[Unit]] = listOfIO.sequence  
-
+```
+```scala mdoc
 ioOfList.unsafeRunSync()
-
 ```
 
 These 2 operations can be combined using `traverse`. 
 This is more efficient as the list is traversed only once.
 
-```scala mdoc
+```scala mdoc:silent
 val runner = inputs.traverse(process)
+```
+```scala mdoc
 runner.unsafeRunSync()
 ```
 
@@ -133,8 +141,10 @@ We could run the effects in parallel.
 But we need to consider if the processor (eg a webservice or database) can handle very rapid requests.
 We also need to know that our effects do not need to happen in order.
 
-```scala mdoc
+```scala mdoc:silent
 val parallel = inputs.parTraverse(process)
+```
+```scala mdoc
 parallel.unsafeRunSync()
 ```
 
@@ -147,15 +157,19 @@ indicating that each element was processed.
 We could return just `Unit` indicating that all items have been processed.
 
 One way is to use `List.map`, then `List.fold`, with `>>` as the combiner function
-```scala mdoc
+```scala mdoc:silent
 val all = inputs.map(process).fold(IO.unit)(_ >> _)
+```
+```scala mdoc
 all.unsafeRunSync()
 ```
 
 It is possible to do the same more succinctly with `foldMapM` from the `Traverse` type class.
 This makes use of an implicitly available for `Monoid[IO]`
-```scala mdoc
+```scala mdoc:silent
 val k = inputs.foldMapM(process)
+```
+```scala mdoc
 k.unsafeRunSync()
 ```
 
@@ -168,15 +182,16 @@ The neutral or identity element is called `empty`
 The basic idea is easy to understand with some examples.
 
 ### Additive monoid for Int
-```scala mdoc
+```scala mdoc:silent
 import cats.Monoid
-
-val ints:List[Int] = (1 to 5).toList
 
 val addition = new Monoid[Int] {
                    val empty = 0
                    def combine(a:Int, b:Int):Int = a + b 
                 }
+```
+```scala mdoc
+val ints:List[Int] = (1 to 5).toList
 
 ints.combineAll(addition)
 ```
@@ -197,24 +212,25 @@ But I haven't seen `Group` used on a project.
 For multiplication, we must define our own `Monoid`.
 This is because only one can be available in the same scope.
 ### Multiplicative monoid for Int
-```scala mdoc
-
+```scala mdoc:silent
 val multiplication = new Monoid[Int] {
                    val empty = 1
                    def combine(a:Int, b:Int):Int = a * b 
                 }
-
+```
+```scala mdoc
 ints.combineAll(multiplication)
 ```
 ### List monoid
 A Monoid is not just for numeric types but can be created for IO, List, String, Unit, etc.
-```scala mdoc
-val lists:List[List[Int]] = List(List(1,2,3),List(4,5),List(6,7))
-
+```scala mdoc:silent
 def concatination[A] = new Monoid[List[A]] {
                    val empty = Nil
                    def combine(a:List[A], b:List[A]):List[A] = a ++ b 
                 }
+```
+```scala mdoc
+val lists:List[List[Int]] = List(List(1,2,3),List(4,5),List(6,7))
 
 lists.combineAll(concatination)
 ```
