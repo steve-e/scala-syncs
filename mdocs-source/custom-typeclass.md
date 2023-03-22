@@ -165,8 +165,10 @@ combineWithAM(List(2.0, 3.0, 4.0))
 ```
 
 We can see the implicit conversion happening if we really want to.
-```scala mdoc
+```scala mdoc:silent
 val ops1: AnnotatedMonoid.Ops[Int] = 1
+```
+```scala mdoc
 ops1.combine(2)
 ops1.|+|(3)
 ```

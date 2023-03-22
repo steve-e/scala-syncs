@@ -176,7 +176,8 @@ combineWithAM(List(2.0, 3.0, 4.0))
 We can see the implicit conversion happening if we really want to.
 ```scala
 val ops1: AnnotatedMonoid.Ops[Int] = 1
-// ops1: AnnotatedMonoid.Ops[Int] = syncs.typeclasses.AnnotatedMonoid$ops$$anon$1@5bced9c9
+```
+```scala
 ops1.combine(2)
 // res10: Int = 3
 ops1.|+|(3)
