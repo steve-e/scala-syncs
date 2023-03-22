@@ -41,7 +41,8 @@ lazy val docs = project
   .settings(
     scalacOptions += "-Ypartial-unification",
     mdocOut := file("docs"),
-    mdocIn := file("mdocs-source")
+    mdocIn := file("mdocs-source"),
+    mdocExtraArguments := List("--no-link-hygiene")
   )
   .dependsOn(root)
   .enablePlugins(MdocPlugin)

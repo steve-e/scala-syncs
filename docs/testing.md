@@ -22,9 +22,9 @@ Mature library with
 
 Examples
 
-- [FlatSpec using asserts](/src/test/scala/syncs/testing/scalatest/ScalaTestFlatAssertsSpec.scala)
-- [FlatSpec using Matchers](/src/test/scala/syncs/testing/scalatest/ScalaTestFlatAssertsSpec.scala)
-- [FlatSpec testing IO](/src/test/scala/syncs/testing/scalatest/ScalaTestIOSpec.scala) 
+- [FlatSpec using asserts](../src/test/scala/syncs/testing/scalatest/ScalaTestFlatAssertsSpec.scala)
+- [FlatSpec using Matchers](../src/test/scala/syncs/testing/scalatest/ScalaTestFlatMatchersSpec.scala)
+- [FlatSpec testing IO](../src/test/scala/syncs/testing/scalatest/ScalaTestIOSpec.scala) 
   Later versions of ScalaTest can have better integration with cats effect
 
 
@@ -37,7 +37,12 @@ A newer library with
 
 Examples
 
-- [Basic](/src/test/scala/syncs/testing/munit/MunitBasicExampleSpec.scala)
-- [Extended](/src/test/scala/syncs/testing/munit/MunitExtendedExampleSpec.scala)
-- [Futures](/src/test/scala/syncs/testing/munit/MunitFuturesExampleSpec.scala)
-- [Integration with Cats Effect IO](/src/test/scala/syncs/testing/munit/MunitCatsEffectExampleSpec.scala)
+- [Basic](../src/test/scala/syncs/testing/munit/MunitBasicExampleSpec.scala)
+- [Extended](../src/test/scala/syncs/testing/munit/MunitExtendedExampleSpec.scala)
+- [Futures](../src/test/scala/syncs/testing/munit/MunitFuturesExampleSpec.scala)
+- [Integration with Cats Effect IO](../src/test/scala/syncs/testing/munit/MunitCatsEffectExampleSpec.scala)
+
+## Test driven development example
+    Develop a list
+
+    Maybe look at a spark test?
