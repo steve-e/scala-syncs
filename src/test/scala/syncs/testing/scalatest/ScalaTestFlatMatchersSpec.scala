@@ -35,6 +35,10 @@ class ScalaTestFlatMatchersSpec extends AnyFlatSpec
     list should have('isEmpty(true))
   }
 
+  it should "fail if we say list have foo true" in {
+    list should have('foo(true))
+  }
+
   it should "fail if we say list.isEmpty shouldBE true" in {
     list.isEmpty shouldBe true
   }
