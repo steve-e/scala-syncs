@@ -9,7 +9,7 @@ A `Fiber` can be created by calling `start` on an `IO`
 This example is extended from the cats effect documentation. 
 It illustrates starting a `Fiber`, concurrency and error handling.
 
-```scala mdoc
+```scala mdoc:silent
 import cats.effect._
 import cats.implicits._
 
@@ -18,7 +18,8 @@ import scala.concurrent.duration.DurationInt
 
 implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)
 implicit val contextShift: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
-
+```
+```scala mdoc
 def stdOut(message: String): IO[Unit] = IO(println(message))
 def raiseError(message:String): IO[Unit] = IO.raiseError(new Exception(message))
 
@@ -62,8 +63,10 @@ We can ensure that the special handling of an object in various ways
 ### Guarantee
 
 The guarantee takes an `IO[Unit]` that is always executed, even if there is an error
-```scala mdoc
+```scala mdoc:silent
 val ops = stdOut("Starting ...") >> raiseError("Halting !!") >> stdOut("never happens")
+```
+```scala mdoc
 ops.guarantee(stdOut("definitely happens")).attempt.unsafeRunSync()
 ```
 
@@ -72,13 +75,15 @@ ops.guarantee(stdOut("definitely happens")).attempt.unsafeRunSync()
 The `bracket` takes 2 functions. The first operates on the enclosed type, but suspending the result in `IO`.
 The second function "releases" the type with a side effecting result of `IO[Unit]`.
 
-```scala mdoc
+```scala mdoc:silent
 val bracketEx = IO.pure("a value").bracket(v => raiseError(s"Halting $v !!"))(v => stdOut(s"release $v"))
+```
+```scala mdoc
 bracketEx.attempt.unsafeRunSync()
 ```
 
 This example nests 2 brackets, so we can operate both on a java `File` and a `FileWriter`.
-```scala mdoc
+```scala mdoc:silent
 import java.io.{File, FileWriter}
 
 val writeFile = IO(new File("/tmp","bracket-test ")).bracket { file =>
@@ -87,8 +92,9 @@ val writeFile = IO(new File("/tmp","bracket-test ")).bracket { file =>
   )(f => IO(f.close()))
 }(file => IO(println("File Length "+file.length())) *> IO(file.delete())
 )
+```
+```scala mdoc
 writeFile.unsafeRunSync()
-
 ```
 
 ### Resource
@@ -98,7 +104,7 @@ There is a `Monad` instance for `Resource`, so it is easier to compose than `Bra
 Here we compose a `File` and a `FileWriter`.
 They are both released automatically in the right order.
 
-```scala mdoc
+```scala mdoc:silent
 
 val fileResource = Resource.make(IO(new File("/tmp","file-test ")) <* stdOut("creating file") )(file => IO(file.delete()) >> stdOut("deleting file"))
 def writerResource(file:File) =  Resource.make(IO(new FileWriter(file)) <* stdOut("creating writer"))(w => IO(w.close()) >> stdOut("closing writer"))
@@ -111,6 +117,7 @@ val writerWithDeletingFile =  for {
 val resourceEx = writerWithDeletingFile.use(f =>
     IO(f.write("Hello")) *> stdOut("Wrote file") *> IO(f.flush())
 )
-
+```
+```scala mdoc
 resourceEx.unsafeRunSync()
 ```
