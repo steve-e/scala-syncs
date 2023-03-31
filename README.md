@@ -1,6 +1,7 @@
 # Scala Syncs
-This repo holds some code examples from the scala sync meetings, and related information.
+This repo holds some code examples from the scala mentoring sessions, and related information.
 
+The Scala Syncs were knowlege sharing sessions to eperience data engineers that were new to scala.
 ## Build Docs
 Build the docs by running
 ```bash
