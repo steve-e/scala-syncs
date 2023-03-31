@@ -2,6 +2,9 @@
 This repo holds some code examples from the scala mentoring sessions, and related information.
 
 The Scala Syncs were knowlege sharing sessions to eperience data engineers that were new to scala.
+
+Earlier meetings were based around ScalaTests showcasing particular features and techniques.
+Later on the meetings were based around markdown pages generated with mdoc
 ## Build Docs
 Build the docs by running
 ```bash
