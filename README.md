@@ -33,7 +33,7 @@ sbt docs/mdoc
 - [Validated and Applicative](docs/validated-and-applicative.md)
 - [Testing](docs/testing.md)
 
-### Absolute basics on of Category theory
+### Absolute basics of Category theory
 - [What is a category](docs/category.md)
 - [Functor](docs/functor.md)
 
