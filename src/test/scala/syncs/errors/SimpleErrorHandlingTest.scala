@@ -137,7 +137,7 @@ class SimpleErrorHandlingTest extends AnyFlatSpec with Matchers {
     maybeBoolean.contains(true) shouldBe true
   }
 
-  "getBoolean" should "return null if input is less than zero" in {
+  "getBoolean" should "return None if input is less than zero" in {
     val maybeBoolean = OptionWrapper.getBoolean(-1)
     maybeBoolean shouldBe empty
     maybeBoolean.contains(true) shouldBe false
