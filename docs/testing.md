@@ -10,7 +10,7 @@ An alternative (top-down) approach is given by [Growing Object-Oriented Software
 
 ### [Writing tests for Datasets Platform pipelines](https://data.mpi-internal.com/150-products/100-list/datasets-platform/020-onboarding/050-create-a-pipeline/writing-pipeline-tests/)
 
-Documentation on the Datasets Platform test facilities
+Documentation on the Datasets Platform test facilities (not internet accessible!)
 
 ## Some scala test Frameworks    
 
